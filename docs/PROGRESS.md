@@ -20,7 +20,7 @@
 | A7 | 段级金标准 → chunk 级 | ✅ **完成**（`gold_chunk_ids`，0 条不可达） | `qa_with_gold.jsonl`、`docs/chunking_stats_*.md` |
 | A8 (P7) | 切分实验（24 组网格 + 硬/软边界消融） | ✅ **完成** | `docs/chunk_grid_results.md`、`docs/chunk_grid_hard.md`、`docs/grid_results*.csv` |
 | **A9 (P8)** | **交付：契约 + 校验器 + 防泄漏 + tag** | ✅ **完成（24 项校验全过）** | `docs/data_contract.md`、`src/rag_data/validate.py`、`scripts/05_validate_contract.py`、`docs/contract_validation.md` |
-| B1–B4 | PubMedQA-1k 副线（冒烟测试 + 泛化性） | ⬜ 待办 | — |
+| B1–B4 | PubMedQA-1k 副线（冒烟测试 + 泛化性） | ✅ **完成**（管道通用，但切分退化） | `docs/pubmedqa_report.md`、`scripts/10_prepare_pubmedqa.py`、`docs/contract_validation_pubmedqa.md` |
 | C1–C3 | 契约文档 / 通用校验器 / 防泄漏校验 | ✅ **并入 A9 完成** | 同上 |
 
 **已移交给其他成员**（原 N1–N2 属 M1，现归 M3）：参考文献抓取、耦合/共被引计算、实体抽取、图构建、图查询。
@@ -44,6 +44,22 @@
 3. **`prev_chunk_id` 被写成 `NaN`** —— 严格 JSON 解析器直接拒绝；jsonl 里 `para_spans` 也还是字符串而非数组。
 
 修法：`03_build_chunks.py` 加 `jsonable()` 递归转换 + `allow_nan=False` 写出，两个格式的字段类型现在完全一致。
+
+### B 线（PubMedQA-1k）实测：管道通用，但切分退化
+
+完整报告见 [`pubmedqa_report.md`](pubmedqa_report.md)。核心是三个数字：
+
+| 配置 | chunks | **chunks/篇** | 单段 chunk 占比 |
+|---|---:|---:|---:|
+| **512 / 0.2**（项目默认） | 1,024 | **1.02** | 2.0% |
+| 128 / 0.2 | 4,230 | 4.23 | 51.4% |
+| *（对照）QASPER 512 / 0.2* | *17,653* | ***15.10*** | *—* |
+
+- PubMedQA 平均 **307 token/篇**、**max 648**，3.36 段/篇 → 默认 512 下 **976/1,000 篇被切成恰好 1 个 chunk**。**切分在这里是空操作**，chunk 网格与图检索都无从做起。
+- 与 QASPER 相差 **18×**（token/篇 307 vs 5,504），这是数据形态差异，不是参数问题。
+- **清洗规则完全空转**：QASPER 的 S2ORC 占位符规则命中 58,354 次，在 PubMedQA 上 **0 次**（后者是已清洗的 PubMed 摘要）。**管道代码通用，清洗配置不通用。**
+- **真正有价值的产出**：同一套 `chunker` + `03_build_chunks` + `05_validate_contract` 不改一行代码跑通，契约校验 **23 PASS / 1 WARN / 0 FAIL**（唯一 WARN 是自加的 `decision` 列）。**证明 schema 可迁移**。
+- **建议用法**：只做「文档级检索冒烟测试」（1,000 候选找对摘要，恰好补上 QASPER 缺的"找对论文"这一环）+ 端到端 yes/no/maybe 准确率。**明确不做** chunk 网格、图检索、段落级 recall、与 QASPER 并排比表。
 
 ### A5–A7 实测（size=512, overlap=102, min=64）
 
@@ -106,6 +122,8 @@
 | `data/processed/chunks/size512_ov102_hard/` | 同上（硬边界对照） | 23,851 chunk | ❌ gitignored |
 | `data/processed/chunks/grid_results.csv` / `_hard.csv` | A8 网格结果（24 + 6 组） | — | ❌ gitignored |
 | `data/processed/chunks/grid_results.json` | 网格元数据 + 全部行 | — | ❌ gitignored |
+| `data/raw/pubmedqa/ori_pqal.json` | PubMedQA-1k 原始数据（2.58 MB，无需认证） | 1,000 条 | ❌ gitignored |
+| `data/processed/pubmedqa/` | 与 QASPER **同 schema**：3,358 段 / 1,000 题 / 两套 chunk 表 | — | ❌ gitignored |
 | `docs/grid_results.csv` / `docs/grid_results_hard.csv` | 上两者的入库副本（`data/` 全目录 gitignore） | 4 KB | ✅ 入库 |
 
 `paragraphs.parquet` 主要字段：`para_id` / `paper_id` / `split` / `section_idx` / `section_name` / `para_idx` / `is_abstract` / `text_raw` / `text_clean` / `char_start` / `char_end` / `n_chars` / `n_tokens` / `offset_map`。
@@ -158,6 +176,14 @@ $PY scripts/04_chunk_grid.py --report-only --processed-dir data/processed --out-
 $PY scripts/05_validate_contract.py --processed-dir data/processed \
     --chunks-dir data/processed/chunks/size512_ov102_soft \
     --out docs/contract_validation.md
+
+# 7) B 线：PubMedQA-1k（下载 + 转 schema + 同一套切分与校验）
+$PY scripts/10_prepare_pubmedqa.py --raw-dir data/raw/pubmedqa \
+    --processed-dir data/processed/pubmedqa --out-dir docs \
+    --tokenizer data/raw/bge_tok/tokenizer.json
+$PY scripts/03_build_chunks.py --chunk-size 512 --overlap 0.2 --section-boundary soft \
+    --name pubmedqa_512_ov102 --processed-dir data/processed/pubmedqa --out-dir docs \
+    --tokenizer data/raw/bge_tok/tokenizer.json
 
 # 测试
 $env:PYTHONPATH = "src"; $PY -m pytest tests -q -p no:cacheprovider
