@@ -2,7 +2,7 @@
 
 > 维护：Member 1（Dataset & Chunking）　|　生效版本：`data-v1.0`　|　最后更新：2026-11-01
 > 本文件是**下游唯一权威口径**。字段含义、坐标系、评测分母、防泄漏红线以本文为准；
-> 与 `PROGRESS.md`（进度）、`chunk_grid_results.md`（实验）冲突时，本文优先。
+> 与 `../PROGRESS.md`（进度）、`../experiments/chunk_grid_results.md`（实验）冲突时，本文优先。
 
 ---
 
@@ -67,7 +67,7 @@ chunk_id = "{paper_id}#s{sec}#c{idx:03d}"            例：1503.00841#s03#c001
 | `sec_key` | str | `abs` 或两位补零的 `section_idx`，用于按节编号 |
 | `chunk_idx_in_section` | int | 节内序号，0..n-1 |
 | `chunk_idx_in_paper` | int | 篇内序号，0..n-1，**等于阅读顺序** |
-| `text` | str | chunk 正文（已清洗，见 `cleaning_report.md`） |
+| `text` | str | chunk 正文（已清洗，见 `../dataset/cleaning_report.md`） |
 | `n_tokens` | int | `text` 的 BGE tokenizer 计数 |
 | `char_start` / `char_end` | int | **该篇论文清洗后扁平文本**的半开区间 `[start, end)`。不是 PDF 偏移、不是原始 JSON 偏移 |
 | `para_ids` | list[str] | 本 chunk 覆盖的段落，按首次出现顺序，**无重复** |
@@ -232,7 +232,7 @@ recall = len(hit_paras & gold) / len(gold)
 |---|---|---|
 | 两个 chunk 配置的检索质量 | `para_id` 级 recall | `chunk_id` 级 recall |
 | 两个 chunk 配置的切分代价 | `paras_torn_pct`、`oracle_recall@k` | 平均 chunk 长度 |
-| 检索是否达到理论上限 | `oracle_recall@k`（见 `chunk_grid_results.md`） | — |
+| 检索是否达到理论上限 | `oracle_recall@k`（见 `../experiments/chunk_grid_results.md`） | — |
 
 `oracle_recall@k` 是切分给下游划的天花板：本配置 `@1 = 81.62%`、`@3 = 99.37%`、`@5 = 99.97%`。**任何方法的 recall@k 超过它，一定是算错了。**
 
@@ -247,7 +247,7 @@ $env:PYTHONPATH = "src"
 # 校验一个配置（结构 + 覆盖 + gold 可达 + 防泄漏）
 $PY scripts/05_validate_contract.py --processed-dir data/processed \
     --chunks-dir data/processed/chunks/size512_ov102_soft \
-    --out docs/contract_validation.md
+    --out docs/contract/contract_validation.md
 ```
 
 当前结果：**24 PASS / 0 WARN / 0 FAIL**（见 `contract_validation.md`）。

@@ -162,7 +162,7 @@ chunk_id = f"{paper_id}#s{section_idx:02d}#c{chunk_idx:03d}"
   - 论文长度（token）分布、section 数分布
   - `evidence` 中 `FLOAT SELECTED:` 占比、`unanswerable` 占比
   - **同一 split 内 `section_name` 重名率的统计**（决定能不能用名字做主键）
-- **验收**：`docs/dataset_profile.md` 含 6 张统计表 + 3 张分布图，且我能当面解释每个数字
+- **验收**：`../dataset/dataset_profile.md` 含 6 张统计表 + 3 张分布图，且我能当面解释每个数字
 
 > 已知的一个坑：官方 README 的统计里 train 是 2,593 题 / 2,675 条答案，dev 是 1,005 题 / 1,764 条答案——**每题的答案条数在两个 split 间不一致**。所以"多答案怎么聚合"必须显式定义，不能靠默认。
 
@@ -216,7 +216,7 @@ chunk_id = f"{paper_id}#s{section_idx:02d}#c{chunk_idx:03d}"
 - `chunks.parquet` + `manifest.json`
 - `scripts/02_build_chunks.py --config configs/*.yaml`
 - 校验器 `validate.py`：无空 chunk / 无重复 `chunk_id` / 覆盖率 100% / token 分布无长尾异常 / `para_ids` 全非空且能在 `paragraphs.parquet` 里查到
-- **产出 `docs/data_contract.md`（给下游的接口文档，最高优先级交付物）**
+- **产出 `../contract/data_contract.md`（给下游的接口文档，最高优先级交付物）**
 
 ### P6 · Evidence → Paragraph 对齐 ★ 最容易低估
 三级匹配，逐级降级：
@@ -229,7 +229,7 @@ chunk_id = f"{paper_id}#s{section_idx:02d}#c{chunk_idx:03d}"
 - `unanswerable=true` → `answer_type=unanswerable`，单独统计
 - 匹配失败 → 进 `unmapped_evidence` 列表，**必须在报告里给出失败原因分类与占比**
 
-- **验收**：非 float 证据对齐召回率 **≥ 95%**；未对齐样本随机抽 20 条写出原因；产出 `docs/evidence_alignment_report.md`
+- **验收**：非 float 证据对齐召回率 **≥ 95%**；未对齐样本随机抽 20 条写出原因；产出 `../dataset/evidence_alignment_report.md`
 
 ### P7 · Chunk Size / Overlap 实验（见 §6）
 
@@ -266,7 +266,7 @@ chunk_id = f"{paper_id}#s{section_idx:02d}#c{chunk_idx:03d}"
 2. **双轴曲线**：x = chunk_size，左 y = oracle_recall@5，右 y = index_blowup，overlap 分色
 3. **Pareto 前沿图**：横轴索引成本、纵轴 co_split_rate，标出非支配点
 4. **推荐配置**（给一句话理由，例如"512/0.2 在 recall 上仅比 384/0.2 低 0.8pt，但 chunk 数少 33%，推荐 512/0.2"）
-5. `docs/chunking_experiments.md` 完整记录 + 原始 CSV 入库
+5. `../experiments/chunking_experiments.md` 完整记录 + 原始 CSV 入库
 
 ---
 
@@ -339,7 +339,7 @@ RAG_Project/
 
 ## 10. P1 实测结论（2026-11-01，train+dev 共 1,169 篇）
 
-完整数据见 [`dataset_profile.md`](dataset_profile.md) 与 `profile_stats.json`。**下面每条都改写了本清单前面的某个假设**，请以实测为准。
+完整数据见 [`dataset_profile.md`](../dataset/dataset_profile.md) 与 `profile_stats.json`。**下面每条都改写了本清单前面的某个假设**，请以实测为准。
 
 ### 10.1 推翻或修正的假设
 
@@ -391,7 +391,7 @@ RAG_Project/
 
 ## 11. P2/P3 实测结论（已完成）
 
-完整数据见 [`cleaning_report.md`](cleaning_report.md)，进度见 [`PROGRESS.md`](PROGRESS.md)。
+完整数据见 [`cleaning_report.md`](../dataset/cleaning_report.md)，进度见 [`PROGRESS.md`](../PROGRESS.md)。
 
 ### 11.1 与本清单原设计的差异
 

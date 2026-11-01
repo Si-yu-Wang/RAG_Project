@@ -114,7 +114,7 @@ PubMedQA 的退化反而提供了一个干净的任务：**1,000 篇摘要里，
 
 ### 6.3 如果一定要用它和 CG-RAG 对话
 
-只有当**语料口径**写清楚时才有意义：CG-RAG 把 PubMedQA 扩成 7,849 篇算 Hit@1，我们如果只用 1,000 条摘要，池子小 7.8 倍，**同样方法的 Hit@1 必然更高**。这不是方法更强，是任务更简单。详见 `docs/跨数据集可比性说明.md`。
+只有当**语料口径**写清楚时才有意义：CG-RAG 把 PubMedQA 扩成 7,849 篇算 Hit@1，我们如果只用 1,000 条摘要，池子小 7.8 倍，**同样方法的 Hit@1 必然更高**。这不是方法更强，是任务更简单。详见 `../design/跨数据集可比性说明.md`。
 
 ---
 
@@ -140,7 +140,7 @@ $PY scripts/03_build_chunks.py --chunk-size 128 --overlap 0.2 --section-boundary
 # B4：同一套契约校验
 $PY scripts/05_validate_contract.py --processed-dir data/processed/pubmedqa `
     --chunks-dir data/processed/pubmedqa/chunks/pubmedqa_512_ov102 `
-    --out docs/contract_validation_pubmedqa.md
+    --out ../contract/contract_validation_pubmedqa.md
 ```
 
 ---
@@ -154,4 +154,4 @@ $PY scripts/05_validate_contract.py --processed-dir data/processed/pubmedqa `
 | `data/processed/pubmedqa/qa.parquet` / `qa_dataset.jsonl` | 1,000 题，`gold_para_ids` 全空（无证据标注） |
 | `data/processed/pubmedqa/manifest.json` | 规模统计 + 清洗命中 + 判定分布 |
 | `data/processed/pubmedqa/chunks/pubmedqa_{512_ov102,128_ov26}/` | 两套 chunk 表 |
-| `docs/contract_validation_pubmedqa.md` | 契约校验 23 PASS / 1 WARN / 0 FAIL |
+| `../contract/contract_validation_pubmedqa.md` | 契约校验 23 PASS / 1 WARN / 0 FAIL |

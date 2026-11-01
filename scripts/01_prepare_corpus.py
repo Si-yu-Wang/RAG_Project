@@ -84,7 +84,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="data/raw/qasper")
     ap.add_argument("--processed-dir", default="data/processed")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/dataset")
     ap.add_argument("--tokenizer", default=DEFAULT_TOKENIZER_FILE)
     ap.add_argument("--ref-mode", default="placeholder", choices=["keep", "placeholder", "drop"])
     ap.add_argument("--no-abstract", action="store_true", help="exclude the abstract section")

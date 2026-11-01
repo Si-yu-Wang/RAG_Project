@@ -8,7 +8,7 @@ Outputs (per config):
     data/processed/chunks/<name>/chunks.jsonl
     data/processed/chunks/<name>/qa_with_gold.jsonl
     data/processed/chunks/<name>/manifest.json
-    docs/chunking_stats_<name>.md
+    docs/experiments/chunking_stats_<name>.md
 """
 
 from __future__ import annotations
@@ -207,7 +207,7 @@ def gold_mapping(chunks: list[dict], qa: pd.DataFrame) -> tuple[list[dict], dict
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--processed-dir", default="data/processed")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/experiments")
     ap.add_argument("--tokenizer", default=DEFAULT_TOKENIZER_FILE)
     ap.add_argument("--chunk-size", type=int, default=512)
     ap.add_argument("--overlap", type=float, default=0.2)

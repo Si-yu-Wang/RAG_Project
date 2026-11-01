@@ -58,7 +58,7 @@ def main() -> int:
     ap.add_argument("--data-dir", default="data/raw/qasper")
     ap.add_argument("--n", type=int, default=30)
     ap.add_argument("--sleep", type=float, default=1.1, help="seconds between API calls")
-    ap.add_argument("--out", default="docs/citation_graph_probe.md")
+    ap.add_argument("--out", default="docs/experiments/citation_graph_probe.md")
     args = ap.parse_args()
 
     dev = Path(args.data_dir) / "qasper-dev-v0.3.json"

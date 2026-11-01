@@ -1,4 +1,4 @@
-﻿"""P1 / script 00: profile the QASPER corpus and emit docs/dataset_profile.md.
+﻿"""P1 / script 00: profile the QASPER corpus and emit docs/dataset/dataset_profile.md.
 
 Usage:
     python scripts/00_profile_dataset.py --data-dir data/raw/qasper --out-dir docs
@@ -93,7 +93,7 @@ def save_bar(labels, values, path: Path, title: str, xlabel: str = "", rotate: i
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="data/raw/qasper")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/dataset")
     ap.add_argument("--tokenizer", default=DEFAULT_TOKENIZER_FILE,
                     help="path to tokenizer.json, or a HF model name")
     ap.add_argument("--no-figures", action="store_true", help="skip PNG generation")

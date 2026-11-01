@@ -61,7 +61,7 @@ def classify_answer(ans: dict) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="data/raw/qasper")
-    ap.add_argument("--out", default="docs/dataset_consistency.md")
+    ap.add_argument("--out", default="docs/dataset/dataset_consistency.md")
     args = ap.parse_args()
 
     per_split = {}
