@@ -1,26 +1,26 @@
 # 项目进度 · Member 1（Dataset & Chunking）
 
 > 分支：`feature/dataset-chunking`　|　最后更新：2026-11-01
-> 本文件只记录**已完成 / 待办 / 关键决策**；技术细节见 [`Dataset_Chunking_技术清单.md`](Dataset_Chunking_技术清单.md)，实测数据见 [`dataset_profile.md`](dataset_profile.md)、[`cleaning_report.md`](cleaning_report.md)。
+> 本文件只记录**已完成 / 待办 / 关键决策**；技术细节见 [`design/Dataset_Chunking_技术清单.md`](design/Dataset_Chunking_技术清单.md)，实测数据见 [`dataset_profile.md`](dataset/dataset_profile.md)、[`cleaning_report.md`](dataset/cleaning_report.md)。
 
 ---
 
 ## 一、进度总览
 
-> 计划已于 2026-11-01 改为 **v2（双数据集 + 建图移交 M3 + 证据对齐提前）**，详见 [`M1_实施计划_v2.md`](M1_实施计划_v2.md)。下表编号与 v2 对齐，括号内为旧编号。
+> 计划已于 2026-11-01 改为 **v2（双数据集 + 建图移交 M3 + 证据对齐提前）**，详见 [`design/M1_实施计划_v2.md`](design/M1_实施计划_v2.md)。下表编号与 v2 对齐，括号内为旧编号。
 
 | # | 任务 | 状态 | 交付物 |
 |---|---|---|---|
-| A1 (P0/P1) | 工程基建 + Schema 摸底 | ✅ 完成 | `pyproject.toml`、`.gitignore`、`tests/`、`docs/dataset_profile.md`、`docs/figures/*.png` |
-| A2 (P2) | 清洗（带 offset map） | ✅ 完成 | `src/rag_data/cleaner.py`、`docs/cleaning_report.md` |
+| A1 (P0/P1) | 工程基建 + Schema 摸底 | ✅ 完成 | `pyproject.toml`、`.gitignore`、`tests/`、`dataset/dataset_profile.md`、`dataset/figures/*.png` |
+| A2 (P2) | 清洗（带 offset map） | ✅ 完成 | `src/rag_data/cleaner.py`、`dataset/cleaning_report.md` |
 | A3 (P3) | 展平为段落索引 | ✅ 完成 | `src/rag_data/flattener.py`、`data/processed/paragraphs.parquet` |
-| **A4 (P6)** | 证据对齐 → `qa.parquet` / `qa_dataset.jsonl` | ✅ **完成（对齐率 99.97%）** | `docs/evidence_alignment_report.md` |
+| **A4 (P6)** | 证据对齐 → `qa.parquet` / `qa_dataset.jsonl` | ✅ **完成（对齐率 99.97%）** | `dataset/evidence_alignment_report.md` |
 | A5 (P4) | Chunker 实现 | ✅ **完成（13 条单测）** | `src/rag_data/chunker.py` |
 | A6 (P5) | chunk 表导出 + 校验 | ✅ **完成** | `data/processed/chunks/<config>/chunks.{parquet,jsonl}` |
 | A7 | 段级金标准 → chunk 级 | ✅ **完成**（`gold_chunk_ids`，0 条不可达） | `qa_with_gold.jsonl`、`docs/chunking_stats_*.md` |
-| A8 (P7) | 切分实验（24 组网格 + 硬/软边界消融） | ✅ **完成** | `docs/chunk_grid_results.md`、`docs/chunk_grid_hard.md`、`docs/grid_results*.csv` |
-| **A9 (P8)** | **交付：契约 + 校验器 + 防泄漏 + tag** | ✅ **完成（24 项校验全过）** | `docs/data_contract.md`、`src/rag_data/validate.py`、`scripts/05_validate_contract.py`、`docs/contract_validation.md` |
-| B1–B4 | PubMedQA-1k 副线（冒烟测试 + 泛化性） | ✅ **完成**（管道通用，但切分退化） | `docs/pubmedqa_report.md`、`scripts/10_prepare_pubmedqa.py`、`docs/contract_validation_pubmedqa.md` |
+| A8 (P7) | 切分实验（24 组网格 + 硬/软边界消融） | ✅ **完成** | `experiments/chunk_grid_results.md`、`experiments/chunk_grid_hard.md`、`experiments/grid_results*.csv` |
+| **A9 (P8)** | **交付：契约 + 校验器 + 防泄漏 + tag** | ✅ **完成（24 项校验全过）** | `contract/data_contract.md`、`src/rag_data/validate.py`、`scripts/05_validate_contract.py`、`contract/contract_validation.md` |
+| B1–B4 | PubMedQA-1k 副线（冒烟测试 + 泛化性） | ✅ **完成**（管道通用，但切分退化） | `dataset/pubmedqa_report.md`、`scripts/10_prepare_pubmedqa.py`、`contract/contract_validation_pubmedqa.md` |
 | C1–C3 | 契约文档 / 通用校验器 / 防泄漏校验 | ✅ **并入 A9 完成** | 同上 |
 
 **已移交给其他成员**（原 N1–N2 属 M1，现归 M3）：参考文献抓取、耦合/共被引计算、实体抽取、图构建、图查询。
@@ -31,10 +31,10 @@
 
 | 产物 | 内容 |
 |---|---|
-| `docs/data_contract.md` | **下游唯一权威口径**：consumer matrix、23 个字段逐条语义、三段坐标系、评测分母 2,991 的推导、`co_split_rate`、防泄漏红线、9 条反模式 |
+| `contract/data_contract.md` | **下游唯一权威口径**：consumer matrix、23 个字段逐条语义、三段坐标系、评测分母 2,991 的推导、`co_split_rate`、防泄漏红线、9 条反模式 |
 | `src/rag_data/validate.py` | 可执行契约：18 项 chunks 检查 + 6 项 qa 检查，纯 Python、可单测 |
-| `scripts/05_validate_contract.py` | 对任一配置跑全量校验，输出 `docs/contract_validation*.md` |
-| `docs/contract_validation.md` | **24 PASS / 0 WARN / 0 FAIL**（soft 与 hard 两个配置都是） |
+| `scripts/05_validate_contract.py` | 对任一配置跑全量校验，输出 `contract/contract_validation*.md` |
+| `contract/contract_validation.md` | **24 PASS / 0 WARN / 0 FAIL**（soft 与 hard 两个配置都是） |
 | `tests/test_validate.py` | 8 条，把"泄漏必须报错""NaN≠None""重复 span 必须拒收"等钉死 |
 
 **校验器一上线就抓到 3 个真实缺陷**（都已修）：
@@ -47,7 +47,7 @@
 
 ### B 线（PubMedQA-1k）实测：管道通用，但切分退化
 
-完整报告见 [`pubmedqa_report.md`](pubmedqa_report.md)。核心是三个数字：
+完整报告见 [`pubmedqa_report.md`](dataset/pubmedqa_report.md)。核心是三个数字：
 
 | 配置 | chunks | **chunks/篇** | 单段 chunk 占比 |
 |---|---:|---:|---:|
@@ -79,7 +79,7 @@
 
 ### A8 实测（24 组网格，size 128–768 × overlap 0–0.3）
 
-完整表见 [`chunk_grid_results.md`](chunk_grid_results.md)。核心是引入了**模型无关的召回上界**：
+完整表见 [`chunk_grid_results.md`](experiments/chunk_grid_results.md)。核心是引入了**模型无关的召回上界**：
 
 > `oracle_recall@k` = 假设排序器提前知道答案、只受切分约束时，k 个 chunk 内能看全的 gold 证据比例。
 > **任何 Dense / Graph / 融合方法的 recall@k 都不可能超过它。**
@@ -126,7 +126,7 @@
 | `data/processed/chunks/*/chunks.jsonl` | jsonl 副本（从 parquet 一行生成） | 50 MB/份 | ❌ 需重跑 |
 | `data/processed/chunks/grid_results.csv` / `.json` | A8 网格结果 | — | ❌ 副本在 `docs/` |
 | `data/raw/pubmedqa/ori_pqal.json` + `data/processed/pubmedqa/` | PubMedQA 副线 | 2.58 MB | ❌ 需重跑 |
-| `docs/grid_results.csv` / `docs/grid_results_hard.csv` | A8 网格结果的入库副本 | 4 KB | ✅ 入库 |
+| `experiments/grid_results.csv` / `experiments/grid_results_hard.csv` | A8 网格结果的入库副本 | 4 KB | ✅ 入库 |
 
 `paragraphs.parquet` 主要字段：`para_id` / `paper_id` / `split` / `section_idx` / `section_name` / `para_idx` / `is_abstract` / `text_raw` / `text_clean` / `char_start` / `char_end` / `n_chars` / `n_tokens` / `offset_map`。
 
@@ -177,7 +177,7 @@ $PY scripts/04_chunk_grid.py --report-only --processed-dir data/processed --out-
 # 6) A9 契约校验（结构 + 覆盖 + gold 可达 + 防泄漏）
 $PY scripts/05_validate_contract.py --processed-dir data/processed \
     --chunks-dir data/processed/chunks/size512_ov102_soft \
-    --out docs/contract_validation.md
+    --out contract/contract_validation.md
 
 # 7) B 线：PubMedQA-1k（下载 + 转 schema + 同一套切分与校验）
 $PY scripts/10_prepare_pubmedqa.py --raw-dir data/raw/pubmedqa \
@@ -204,10 +204,10 @@ $env:PYTHONPATH = "src"; $PY -m pytest tests -q -p no:cacheprovider
 | D5 | 清理保留**逐段 offset map** | 下游若要回原文引用，必须能从 cleaned 偏移反查 |
 | D6 | 空段落（1,133 个，1.85%）在展平时丢弃 | 对检索无贡献，且会产生空 chunk |
 | D7 | 摘要提升为 `section_idx = -1` 的合成 section | QASPER 的 `abstract` 是顶层字段，不在 `full_text` 里 |
-| D8 | **CG-RAG 只是参考文献，不是本项目的基线** | 分工表指定 QASPER；CG-RAG 的实验数据是 PubMedQA-1k + PapersWithCodeQA，全文 0 次提及 QASPER（已用脚本核验），见 `docs/dataset_consistency.md` |
-| D9 | **不换数据集，继续用 QASPER；M3 用"文献耦合边"替代"引用边"** | 见下方「六之三」。核心理由：论文的两个图都是作者自建且未公开，换数据集并不自动获得可比性；而实测证明 QASPER 上直接引用边为 0、耦合边可用（25.7%）。详见 `docs/citation_graph_probe.md` |
+| D8 | **CG-RAG 只是参考文献，不是本项目的基线** | 分工表指定 QASPER；CG-RAG 的实验数据是 PubMedQA-1k + PapersWithCodeQA，全文 0 次提及 QASPER（已用脚本核验），见 `dataset/dataset_consistency.md` |
+| D9 | **不换数据集，继续用 QASPER；M3 用"文献耦合边"替代"引用边"** | 见下方「六之三」。核心理由：论文的两个图都是作者自建且未公开，换数据集并不自动获得可比性；而实测证明 QASPER 上直接引用边为 0、耦合边可用（25.7%）。详见 `experiments/citation_graph_probe.md` |
 | D10 | **默认 chunk 配置保持 `size=512 / overlap=0.2 / soft`** | A8 的 24 组网格复核：在 `chunk_size ≤ 512`（BGE 上限）与 `index_blowup ≤ 1.5` 约束下，该配置的 `oracle_recall@5` = 99.97% 为最优。不设 512 上限时的数据层最优是 `768/0.2`（or@1 89.16%），但不适用于 bge-large |
-| D11 | **`paras_torn`（真实撕裂）与 `paras_dup`（overlap 复制）必须分开统计** | 混为一谈会得出"overlap 全面有害"的错误结论；分开后结论反转。见 `docs/chunk_grid_results.md` §1 |
+| D11 | **`paras_torn`（真实撕裂）与 `paras_dup`（overlap 复制）必须分开统计** | 混为一谈会得出"overlap 全面有害"的错误结论；分开后结论反转。见 `experiments/chunk_grid_results.md` §1 |
 | D12 | **A8 的结论只用于**筛选配置范围**，不作为最终定论** | `oracle_recall@k` 与 embedding 无关，只能给出上界。硬/软边界、512 vs 768 这类取舍取决于 BGE 在 300 vs 480 token 上的信噪比，必须由 M2 的真实 recall 复核 |
 | D13 | **`para_spans` 一段一项**（`len(para_spans) == len(para_ids)`） | 原先按句子写入导致重复；下游若 `zip(para_ids, para_spans)` 会错位。已由 `spans.paired` / `spans.unique` 两项校验强制 |
 | D14 | **评测 recall 一律以 `para_id` 为单位，分母 2,991** | gold 是段落级、chunk 粒度随配置变；607 道无 gold 的题（含 331 道不可回答）必须分流，不能当 0 分。详见 `data_contract.md` §7 |

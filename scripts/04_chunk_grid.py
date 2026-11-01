@@ -359,7 +359,7 @@ def write_report(df: pd.DataFrame, args, ctx: dict) -> Path:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--processed-dir", default="data/processed")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/experiments")
     ap.add_argument("--tokenizer", default=DEFAULT_TOKENIZER_FILE)
     ap.add_argument("--sizes", default="128,192,256,384,512,768")
     ap.add_argument("--overlaps", default="0,0.1,0.2,0.3")

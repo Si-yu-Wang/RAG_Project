@@ -43,7 +43,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="data/raw/qasper")
     ap.add_argument("--processed-dir", default="data/processed")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/dataset")
     ap.add_argument("--no-fuzzy", action="store_true")
     ap.add_argument("--fuzzy-threshold", type=int, default=88)
     args = ap.parse_args()

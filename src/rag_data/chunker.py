@@ -1,6 +1,6 @@
 """A5: sentence-aware, token-bounded chunking with paragraph provenance.
 
-Design constraints come from the data, not from taste (see docs/dataset_profile.md):
+Design constraints come from the data, not from taste (see docs/dataset/dataset_profile.md):
 
 * paragraphs are the gold-evidence unit, so every chunk records **which paragraphs and
   which character ranges** it covers -- otherwise Member 5 cannot map gold evidence to chunks;

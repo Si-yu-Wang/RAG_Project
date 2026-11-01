@@ -79,7 +79,7 @@ def main() -> int:
     ap.add_argument("--processed-dir", default="data/processed")
     ap.add_argument("--chunks-dir", default=None,
                     help="default: data/processed/chunks/size512_ov102_soft")
-    ap.add_argument("--out", default="docs/contract_validation.md")
+    ap.add_argument("--out", default="docs/contract/contract_validation.md")
     args = ap.parse_args()
 
     proc = Path(args.processed_dir)

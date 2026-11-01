@@ -36,13 +36,13 @@
 
 ---
 
-## 3. Member 1 完成了什么
+## 3. dataset-chunking完成内容
 
 | 阶段 | 产出 |
 |---|---|
 | 摸底 → 清洗 → 展平 → 证据对齐 | `paragraphs.parquet`（61,317 段）+ `qa.parquet`（3,598 题，对齐率 99.97%） |
 | 切分 → chunk 表 → 金标准映射 | 默认配置 `size=512 / overlap=0.2 / soft` → **17,653 chunks**，2,991 题全部可映射 |
-| 切分参数实验 | 24 组网格 + 硬/软边界消融（`docs/chunk_grid_results.md`） |
+| 切分参数实验 | 24 组网格 + 硬/软边界消融（`docs/experiments/chunk_grid_results.md`） |
 | 交付契约 | `data_contract.md` + 可执行校验器（24 项检查，53 条单测） |
 | PubMedQA 副线 | 转成同一 schema（1,000 题 / 3,358 段 / 1,024 chunks） |
 
@@ -76,7 +76,7 @@
 
 其他公共资源：`data/raw/bge_tok/tokenizer.json`（重新跑管道必需）。
 
-> 两种格式（parquet / jsonl）是同一份数据的两个视图，字段与类型一致。字段语义见 [`docs/data_contract.md`](docs/data_contract.md)。
+> 两种格式（parquet / jsonl）是同一份数据的两个视图，字段与类型一致。字段语义见 [`docs/contract/data_contract.md`](docs/contract/data_contract.md)。
 
 ---
 
@@ -88,7 +88,7 @@
 读 `chunks.parquet` 的 `chunk_id` + `text` + `n_tokens` 编码、建索引。
 
 ### 建图（Graph）
-`chunks.parquet` 已含 `section_path`（S2ORC 层级）、`prev_chunk_id` / `next_chunk_id`、`para_ids`，文内结构边无需额外数据。跨文档边需自建：QASPER 的论文之间直接互引实测为 0，只能用文献耦合 / 实体共现 / 语义 kNN（见 [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md)）。
+`chunks.parquet` 已含 `section_path`（S2ORC 层级）、`prev_chunk_id` / `next_chunk_id`、`para_ids`，文内结构边无需额外数据。跨文档边需自建：QASPER 的论文之间直接互引实测为 0，只能用文献耦合 / 实体共现 / 语义 kNN（见 [`docs/experiments/citation_graph_probe.md`](docs/experiments/citation_graph_probe.md)）。
 
 ### 评测
 读 `qa.parquet` + 对应配置的 `qa_with_gold.jsonl`。recall 以段落为单位：
@@ -109,7 +109,7 @@ QASPER 的 recall 分母取 `zero_gold_reason == ""` 的 **2,991** 题。
 
 ### 评测口径
 
-1. **QASPER 分母是 2,991，不是 3,598。** 607 道题无证据段：331 不可回答、100 未选证据、174 仅图表、2 对齐失败。
+1. **QASPER 分母是 2,991，不是 3,598。** 
 2. **recall 以 `para_id` 为单位。** gold 是段落级；`chunk_id` 随配置变，跨 size 用 chunk 级 recall 不可比。
 3. **多段证据题占 37.2%**（1,112 / 2,991）；仅 19.5% 的题能在单个 chunk 内看全证据（每题 gold chunk 数 mean 1.76 / max 10）。建议汇报 top-k 而非只 top-1。
 4. **`co_split_rate` = 94.54%**：约 5.5% 的题其答案与证据被切到不同 chunk。
@@ -130,7 +130,7 @@ QASPER 的 recall 分母取 `zero_gold_reason == ""` 的 **2,991** 题。
 
 11. **overlap 造成的相邻 chunk 文本重复是设计意图**；「段落被复制」（`paras_dup_pct`）与「段落被切散」（`paras_torn_pct`）是两件事。
 12. **没有 test split**：官方 v0.3 包只有 train（888 篇）+ dev（281 篇），test 标注不在包内。
-13. **改 schema 三处同改**：`docs/data_contract.md` + `src/rag_data/validate.py` 的 `CHUNK_REQUIRED` + 校验项，再跑一次全量校验。
+13. **改 schema 三处同改**：`docs/contract/data_contract.md` + `src/rag_data/validate.py` 的 `CHUNK_REQUIRED` + 校验项，再跑一次全量校验。
 
 ---
 
@@ -154,7 +154,7 @@ $PY scripts/03_build_chunks.py --chunk-size 512 --overlap 0.2 --section-boundary
     --name size512_ov102_soft --tokenizer data/raw/bge_tok/tokenizer.json `
     --processed-dir data/processed --out-dir docs
 $PY scripts/05_validate_contract.py --processed-dir data/processed `
-    --out docs/contract_validation.md
+    --out docs/contract/contract_validation.md
 
 # PubMedQA
 $PY scripts/10_prepare_pubmedqa.py --raw-dir data/raw/pubmedqa `
@@ -184,11 +184,11 @@ PubMedQA `https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pq
 
 | 我想… | 读这份 |
 |---|---|
-| 接数据 / 查字段 / 确认评测口径 | [`docs/data_contract.md`](docs/data_contract.md) ← **权威口径** |
+| 接数据 / 查字段 / 确认评测口径 | [`docs/contract/data_contract.md`](docs/contract/data_contract.md) ← **权威口径** |
 | 看整体进度、决策记录 | [`docs/PROGRESS.md`](docs/PROGRESS.md) |
-| 看切分参数怎么选、召回上界 | [`docs/chunk_grid_results.md`](docs/chunk_grid_results.md) |
-| 确认数据可用性 | [`docs/contract_validation.md`](docs/contract_validation.md) |
-| 做图检索、查跨文档边 | [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md) |
-| 数据集本身长什么样 | [`docs/dataset_profile.md`](docs/dataset_profile.md)、[`docs/dataset_consistency.md`](docs/dataset_consistency.md) |
-| PubMedQA 的详细说明 | [`docs/pubmedqa_report.md`](docs/pubmedqa_report.md) |
-| 和 CG-RAG 论文的数字可比性 | [`docs/跨数据集可比性说明.md`](docs/跨数据集可比性说明.md) |
+| 看切分参数怎么选、召回上界 | [`docs/experiments/chunk_grid_results.md`](docs/experiments/chunk_grid_results.md) |
+| 确认数据可用性 | [`docs/contract/contract_validation.md`](docs/contract/contract_validation.md) |
+| 做图检索、查跨文档边 | [`docs/experiments/citation_graph_probe.md`](docs/experiments/citation_graph_probe.md) |
+| 数据集本身长什么样 | [`docs/dataset/dataset_profile.md`](docs/dataset/dataset_profile.md)、[`docs/dataset/dataset_consistency.md`](docs/dataset/dataset_consistency.md) |
+| PubMedQA 的详细说明 | [`docs/dataset/pubmedqa_report.md`](docs/dataset/pubmedqa_report.md) |
+| 和 CG-RAG 论文的数字可比性 | [`docs/design/跨数据集可比性说明.md`](docs/design/跨数据集可比性说明.md) |

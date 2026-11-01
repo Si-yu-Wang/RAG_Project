@@ -10,7 +10,7 @@ NOT a place to run a chunk grid or build a graph, because the data cannot suppor
   recall has no denominator and only answer-level accuracy is computable.
 
 Both limits are *findings*, not obstacles, and they are quantified in
-``docs/pubmedqa_report.md``. Emitting the same schema lets the identical downstream code run
+``docs/dataset/pubmedqa_report.md``. Emitting the same schema lets the identical downstream code run
 unchanged, which is exactly what a smoke test is for.
 
 Usage:
@@ -77,7 +77,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw-dir", default="data/raw/pubmedqa")
     ap.add_argument("--processed-dir", default="data/processed/pubmedqa")
-    ap.add_argument("--out-dir", default="docs")
+    ap.add_argument("--out-dir", default="docs/dataset")
     ap.add_argument("--tokenizer", default=DEFAULT_TOKENIZER_FILE)
     args = ap.parse_args()
 
