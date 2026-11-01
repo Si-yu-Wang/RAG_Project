@@ -1,0 +1,199 @@
+{
+  "scale": {
+    "papers": 1169,
+    "body_tokens": {
+      "n": 1169,
+      "mean": 5364.07,
+      "p10": 2498.2,
+      "p50": 5032.0,
+      "p90": 8271.8,
+      "p99": 17794.4,
+      "max": 36529.0
+    },
+    "body_chars": {
+      "n": 1169,
+      "mean": 23753.23,
+      "p10": 11489.8,
+      "p50": 22814.0,
+      "p90": 34245.4,
+      "p99": 79173.2,
+      "max": 168561.0
+    },
+    "abstract_tokens": {
+      "n": 1169,
+      "mean": 190.71,
+      "p10": 120.0,
+      "p50": 184.0,
+      "p90": 268.0,
+      "p99": 361.64,
+      "max": 419.0
+    },
+    "total_body_tokens": 6270599,
+    "total_abstract_tokens": 222942
+  },
+  "structure": {
+    "sections_per_paper": {
+      "n": 1169,
+      "mean": 13.9,
+      "p10": 7.0,
+      "p50": 13.0,
+      "p90": 21.0,
+      "p99": 36.0,
+      "max": 49.0
+    },
+    "paras_per_section": {
+      "n": 16246,
+      "mean": 3.77,
+      "p10": 1.0,
+      "p50": 2.0,
+      "p90": 8.0,
+      "p99": 21.0,
+      "max": 627.0
+    },
+    "paragraph_tokens": {
+      "n": 61281,
+      "mean": 102.33,
+      "p10": 17.0,
+      "p50": 86.0,
+      "p90": 205.0,
+      "p99": 372.0,
+      "max": 3636.0
+    },
+    "total_paragraphs": 61281,
+    "empty_paragraphs": 1133,
+    "empty_paragraph_pct": 1.849,
+    "papers_with_dup_section_name": 0,
+    "papers_with_dup_section_name_pct": 0.0,
+    "extra_dup_occurrences": 0,
+    "papers_with_zero_sections": 1,
+    "papers_with_empty_abstract": 0
+  },
+  "qa": {
+    "n_papers": 1169,
+    "n_questions": 3598,
+    "n_answers": 4439,
+    "qas_per_paper": {
+      "n": 1169,
+      "mean": 3.08,
+      "p10": 1.0,
+      "p50": 3.0,
+      "p90": 5.0,
+      "p99": 8.32,
+      "max": 12.0
+    },
+    "answers_per_question": {
+      "n": 3598,
+      "mean": 1.23,
+      "p10": 1.0,
+      "p50": 1.0,
+      "p90": 2.0,
+      "p99": 2.0,
+      "max": 3.0
+    },
+    "evidence_per_question": {
+      "n": 3598,
+      "mean": 1.95,
+      "p10": 0.0,
+      "p50": 1.0,
+      "p90": 4.0,
+      "p99": 12.0,
+      "max": 74.0
+    },
+    "highlight_per_question": {
+      "n": 3598,
+      "mean": 1.64,
+      "p10": 0.0,
+      "p50": 1.0,
+      "p90": 3.0,
+      "p99": 7.0,
+      "max": 15.0
+    },
+    "answers_violating_single_type_rule": 0,
+    "answers_violating_pct": 0.0,
+    "questions_without_answers": 0
+  },
+  "search_query_filled_pct": 31.46,
+  "evidence": {
+    "total_evidence_items": 7017,
+    "float_items": 639,
+    "float_pct_of_all": 9.11,
+    "empty_items": 0,
+    "textual_items": 6378,
+    "exact_raw": 5883,
+    "exact_norm": 219,
+    "substring": 11,
+    "abstract": 0,
+    "fail": 265,
+    "alignable_pct_of_textual": 95.85,
+    "highlight_items": 5907,
+    "highlight_in_paragraph_pct": 79.3,
+    "sample_failures": [
+      [
+        "1908.06606",
+        "Experimental Studies ::: Comparison with State-of-the-art Methods"
+      ],
+      [
+        "1912.13072",
+        "Data and Models ::: Emotion"
+      ],
+      [
+        "2002.06644",
+        "Baselines and Approach"
+      ],
+      [
+        "2002.06644",
+        "Baselines and Approach ::: Baselines"
+      ],
+      [
+        "2002.06644",
+        "Experiments ::: Dataset and Experimental Settings"
+      ],
+      [
+        "1707.00995",
+        "Hard Stochastic attention"
+      ],
+      [
+        "2003.08553",
+        "System description ::: Architecture"
+      ],
+      [
+        "1909.09491",
+        "Evaluation ::: Plackett-Luce Model for SMT Reranking"
+      ]
+    ]
+  },
+  "figures": {
+    "n": 1169,
+    "mean": 7.26,
+    "p10": 3.0,
+    "p50": 6.0,
+    "p90": 12.0,
+    "p99": 23.32,
+    "max": 78.0
+  },
+  "artifacts": {
+    "total_occurrences": {
+      "BIBREF": 49568,
+      "FIGREF": 3859,
+      "TABREF": 4546
+    },
+    "paragraphs_with_artifacts": 22570,
+    "paragraphs_with_artifacts_pct": 36.83,
+    "per_paper": {
+      "n": 1169,
+      "mean": 49.59,
+      "p10": 17.0,
+      "p50": 44.0,
+      "p90": 83.0,
+      "p99": 151.96,
+      "max": 862.0
+    },
+    "sample_paragraph": "BIBREF0 constructed a network of events using word embedding-derived similarities. Compared with this method, our discourse relation-based linking of events is much simpler and more intuitive."
+  },
+  "tokenizer_backend": "tokenizers-file:tokenizer.json",
+  "per_split_files": {
+    "train": 888,
+    "dev": 281
+  },
+  "generated_at": "2026-10-31T17:35:22+00:00"
+}
