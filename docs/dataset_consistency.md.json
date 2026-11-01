@@ -1,0 +1,104 @@
+{
+  "paper": {
+    "papers": 1585,
+    "questions": 5049,
+    "q_train": 2593,
+    "q_dev": 1005,
+    "q_test": 1451,
+    "answers_per_question": 1.6,
+    "multi_answer_pct": 44.0,
+    "type_extractive": 51.8,
+    "type_free_form": 24.2,
+    "type_yes_no": 13.9,
+    "type_unanswerable": 10.2,
+    "evidence_text": 81.6,
+    "evidence_float": 11.6,
+    "evidence_none": 12.8,
+    "multi_paragraph_pct": 55.5
+  },
+  "per_split": {
+    "train": {
+      "papers": 888,
+      "questions": 2593,
+      "answers": 2675,
+      "answers_per_question": 1.032,
+      "multi_answer_pct": 3.16,
+      "multi_paragraph_pct": 32.31,
+      "multi_paragraph_var_a": 32.95,
+      "multi_paragraph_var_c": 33.6,
+      "text_only_answers": 1981,
+      "types": {
+        "free_form": 622,
+        "extractive": 1363,
+        "yes_no": 409,
+        "unanswerable": 281
+      },
+      "type_pct": {
+        "free_form": 23.25,
+        "extractive": 50.95,
+        "yes_no": 15.29,
+        "unanswerable": 10.5
+      },
+      "evidence": {
+        "text_only": 1981,
+        "float_only": 144,
+        "both": 183,
+        "none": 367
+      }
+    },
+    "dev": {
+      "papers": 281,
+      "questions": 1005,
+      "answers": 1764,
+      "answers_per_question": 1.755,
+      "multi_answer_pct": 74.03,
+      "multi_paragraph_pct": 30.07,
+      "multi_paragraph_var_a": 30.38,
+      "multi_paragraph_var_c": 46.52,
+      "text_only_answers": 1340,
+      "types": {
+        "extractive": 962,
+        "free_form": 431,
+        "yes_no": 208,
+        "unanswerable": 163
+      },
+      "type_pct": {
+        "extractive": 54.54,
+        "free_form": 24.43,
+        "yes_no": 11.79,
+        "unanswerable": 9.24
+      },
+      "evidence": {
+        "text_only": 1340,
+        "float_only": 94,
+        "both": 118,
+        "none": 212
+      }
+    }
+  },
+  "local_total": {
+    "papers": 1169,
+    "questions": 3598,
+    "answers": 4439,
+    "answers_per_question": 1.234,
+    "multi_answer_pct": 22.96,
+    "type_pct": {
+      "extractive": 52.38,
+      "free_form": 23.72,
+      "yes_no": 13.9,
+      "unanswerable": 10.0
+    },
+    "evidence_pct": {
+      "text_only": 74.81,
+      "float_only": 5.36,
+      "both": 6.78,
+      "none": 13.04
+    },
+    "multi_paragraph_pct": 31.41,
+    "multi_para_variants": {
+      "A_any_text_per_answer": 31.66,
+      "B_text_only_per_answer": 31.19,
+      "C_question_union": 40.06
+    }
+  }
+}

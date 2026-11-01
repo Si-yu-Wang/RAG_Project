@@ -1,0 +1,39 @@
+# ---- 参考资料 / 阅读笔记（不入库）----
+reference/
+
+# ---- 数据（体积大、可重新生成）----
+data/raw/
+data/interim/
+data/processed/
+data/external/
+data/cache/
+*.parquet
+*.faiss
+*.index
+*.npy
+*.pkl
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# ---- 实验产物（图表可入库，日志不入库）----
+logs/
+runs/
+wandb/
+
+# ---- 系统 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 本地会话 / 个人笔记（不入库）----
+.workbuddy/
