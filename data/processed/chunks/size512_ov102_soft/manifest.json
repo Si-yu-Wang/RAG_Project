@@ -1,0 +1,45 @@
+{
+  "config_name": "size512_ov102_soft",
+  "config": {
+    "chunk_size": 512,
+    "overlap_ratio": 0.2,
+    "overlap_tokens": null,
+    "min_chunk_tokens": 64,
+    "section_boundary": "soft",
+    "include_abstract": true,
+    "merge_short_tail": true,
+    "resolved_overlap_tokens": 102,
+    "chunker_version": "1.0.0"
+  },
+  "config_hash": "9febc4ee8cb3",
+  "generated_at": "2026-11-01T04:42:51+00:00",
+  "tokenizer": "tokenizers-file:tokenizer.json",
+  "chunks": 17653,
+  "papers": 1169,
+  "tokens_total": 8456895,
+  "body_tokens": 6433441,
+  "index_blowup": 1.315,
+  "avg_tokens": 479.1,
+  "median_tokens": 495,
+  "p95_tokens": 511,
+  "truncated_chunks": 29,
+  "checks": {
+    "chunks": 17653,
+    "duplicate_chunk_ids": 0,
+    "empty_chunks": 0,
+    "over_budget_chunks": 0,
+    "chunks_spanning_sections": 12776,
+    "paragraphs_checked": 61317,
+    "paragraphs_with_boundary_gaps": 4,
+    "paragraphs_with_content_gaps": 0,
+    "broken_neighbour_links": 0
+  },
+  "gold": {
+    "questions": 3598,
+    "questions_with_gold_paras": 2991,
+    "questions_gold_unreachable": 0,
+    "co_split_denom": 1942,
+    "co_split_hit": 1836,
+    "co_split_rate": 94.54
+  }
+}

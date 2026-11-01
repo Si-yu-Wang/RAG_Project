@@ -1,0 +1,47 @@
+{
+  "artifact": "paragraphs.parquet",
+  "generated_at": "2026-10-31T17:38:14+00:00",
+  "clean_config": {
+    "nfkc": true,
+    "strip_zero_width": true,
+    "ref_mode": "placeholder",
+    "join_hyphenated": true,
+    "join_newlines": true,
+    "collapse_spaces": true,
+    "strip": true
+  },
+  "include_abstract": true,
+  "tokenizer": "tokenizers-file:tokenizer.json",
+  "separator": "\n\n",
+  "split_files": {
+    "train": "D:\\Users\\NTU\\6405\\project\\RAG_Project\\data\\raw\\qasper\\qasper-train-v0.3.json",
+    "dev": "D:\\Users\\NTU\\6405\\project\\RAG_Project\\data\\raw\\qasper\\qasper-dev-v0.3.json"
+  },
+  "stats": {
+    "papers": 1169,
+    "paragraphs": 61317,
+    "tokens": 6433441,
+    "chars_clean": 28645722,
+    "rule_hits": {
+      "refs": 58354,
+      "strip": 5772,
+      "nfkc": 140,
+      "newline_join": 2134,
+      "space_collapse": 1310,
+      "zero_width": 11
+    },
+    "latex_heavy": {
+      "paragraphs": 8896,
+      "pct_of_paragraphs": 14.51,
+      "tokens": 1253511,
+      "pct_of_tokens": 19.48
+    }
+  },
+  "checks": {
+    "duplicate_para_ids": 0,
+    "slice_mismatch": 0,
+    "slice_checked": 200,
+    "offset_map_mismatch": 0,
+    "offset_map_checked": 2000
+  }
+}

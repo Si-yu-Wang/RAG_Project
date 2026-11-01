@@ -1,0 +1,23 @@
+{
+  "artifact": "qa.parquet",
+  "generated_at": "2026-10-31T18:19:35+00:00",
+  "align_config": {
+    "use_fuzzy": true,
+    "fuzzy_threshold": 88,
+    "section_rule": true
+  },
+  "stats": {
+    "questions": 3598,
+    "evidence_items": 7017,
+    "levels": {
+      "paragraph": 5883,
+      "float": 639,
+      "section": 274,
+      "paragraph_norm": 219,
+      "fail": 2
+    },
+    "align_rate_pct": 99.97,
+    "papers_in_index": 1169,
+    "papers_missing_from_index": 0
+  }
+}

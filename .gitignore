@@ -1,13 +1,37 @@
 # ---- 参考资料 / 阅读笔记（不入库）----
 reference/
 
-# ---- 数据（体积大、可重新生成）----
-data/raw/
-data/interim/
-data/processed/
-data/external/
-data/cache/
-*.parquet
+# ---- 数据（默认全忽略，仅放行"开箱即用"的最小交付集）----
+# 原则：clone 后 Member 2/3/4/5 无需重跑管道即可直接开工。
+# 放行的 = 下游直接消费的产物；忽略的 = 原始数据、消融对照、可一键生成的副本。
+data/*
+!data/processed/
+!data/raw/
+data/processed/*
+data/raw/*
+
+# 段落级坐标系（M3/M5 的锚点）
+!data/processed/paragraphs.parquet
+# 评测金标准
+!data/processed/qa.parquet
+!data/processed/qa_dataset.jsonl
+!data/processed/manifest.json
+!data/processed/manifest_qa.json
+# 默认切分配置（512/0.2/soft）的 chunk 表 + 金标准映射
+!data/processed/chunks/
+data/processed/chunks/*
+!data/processed/chunks/size512_ov102_soft/
+data/processed/chunks/size512_ov102_soft/*
+!data/processed/chunks/size512_ov102_soft/chunks.parquet
+!data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl
+!data/processed/chunks/size512_ov102_soft/manifest.json
+# BGE tokenizer 单文件（重新跑 M1 管道必需，711 KB）
+!data/raw/bge_tok/
+data/raw/bge_tok/*
+!data/raw/bge_tok/tokenizer.json
+
+# 派生大文件：不直接入库，需时从 parquet / 原始数据重新生成
+*.jsonl.bak
 *.faiss
 *.index
 *.npy
