@@ -109,22 +109,24 @@
 
 ## 二、已产出的数据文件
 
+> 入库策略（2026-11-01 修订）：默认忽略 `data/`，**仅放行下游开箱即用约 59 MB 的最小交付集**。
+> clone 后 M2/M3/M4/M5 无需重跑管道即可直接开工。
+
 | 文件 | 内容 | 规模 | 是否入库 |
 |---|---|---|---|
-| `data/raw/qasper/qasper-{train,dev}-v0.3.json` | 官方原始数据 | 31.9 MB + 11.4 MB | ❌ gitignored |
-| `data/raw/bge_tok/tokenizer.json` | BGE tokenizer（单文件，无需 HF 缓存） | 711 KB | ❌ gitignored |
-| `data/processed/paragraphs.parquet` | **段落级坐标系**：61,317 行 | — | ❌ gitignored |
-| `data/processed/qa.parquet` | **评测金标准**：3,598 题，含 `gold_para_ids` | — | ❌ gitignored |
-| `data/processed/qa_dataset.jsonl` | 同上（jsonl，给 M5 直接读） | — | ❌ gitignored |
-| `data/processed/manifest.json` | 清洗配置 + 校验结果 + 统计 | — | ❌ gitignored |
-| `data/processed/manifest_qa.json` | 对齐配置 + 对齐率 + gold 为空的原因分布 | — | ❌ gitignored |
-| `data/processed/chunks/size512_ov102_soft/` | `chunks.parquet` / `chunks.jsonl` / `qa_with_gold.jsonl` / `manifest.json` | 17,653 chunk | ❌ gitignored |
-| `data/processed/chunks/size512_ov102_hard/` | 同上（硬边界对照） | 23,851 chunk | ❌ gitignored |
-| `data/processed/chunks/grid_results.csv` / `_hard.csv` | A8 网格结果（24 + 6 组） | — | ❌ gitignored |
-| `data/processed/chunks/grid_results.json` | 网格元数据 + 全部行 | — | ❌ gitignored |
-| `data/raw/pubmedqa/ori_pqal.json` | PubMedQA-1k 原始数据（2.58 MB，无需认证） | 1,000 条 | ❌ gitignored |
-| `data/processed/pubmedqa/` | 与 QASPER **同 schema**：3,358 段 / 1,000 题 / 两套 chunk 表 | — | ❌ gitignored |
-| `docs/grid_results.csv` / `docs/grid_results_hard.csv` | 上两者的入库副本（`data/` 全目录 gitignore） | 4 KB | ✅ 入库 |
+| `data/processed/paragraphs.parquet` | **段落级坐标系**：61,317 行 | 32 MB | ✅ 入库 |
+| `data/processed/qa.parquet` | **评测金标准**：3,598 题，含 `gold_para_ids` | 0.75 MB | ✅ 入库 |
+| `data/processed/qa_dataset.jsonl` | 同上（jsonl，给 M5 直接读） | 3.4 MB | ✅ 入库 |
+| `data/processed/manifest.json` + `manifest_qa.json` | 清洗/对齐配置 + 校验 + 统计 | 3 KB | ✅ 入库 |
+| `data/processed/chunks/size512_ov102_soft/chunks.parquet` | **默认配置 chunk 表** | 18 MB | ✅ 入库 |
+| `data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl` + `manifest.json` | 加了 `gold_chunk_ids` | 3.7 MB | ✅ 入库 |
+| `data/raw/bge_tok/tokenizer.json` | BGE tokenizer（单文件，重跑管道必需） | 711 KB | ✅ 入库 |
+| `data/raw/qasper/qasper-{train,dev}-v0.3.json` + tgz | 官方原始数据（S3 可下载） | 43 MB + 11 MB | ❌ 需下载 |
+| `data/processed/chunks/size512_ov102_hard/` | 硬边界消融对照 | 23,851 chunk | ❌ 需重跑 |
+| `data/processed/chunks/*/chunks.jsonl` | jsonl 副本（从 parquet 一行生成） | 50 MB/份 | ❌ 需重跑 |
+| `data/processed/chunks/grid_results.csv` / `.json` | A8 网格结果 | — | ❌ 副本在 `docs/` |
+| `data/raw/pubmedqa/ori_pqal.json` + `data/processed/pubmedqa/` | PubMedQA 副线 | 2.58 MB | ❌ 需重跑 |
+| `docs/grid_results.csv` / `docs/grid_results_hard.csv` | A8 网格结果的入库副本 | 4 KB | ✅ 入库 |
 
 `paragraphs.parquet` 主要字段：`para_id` / `paper_id` / `split` / `section_idx` / `section_name` / `para_idx` / `is_abstract` / `text_raw` / `text_clean` / `char_start` / `char_end` / `n_chars` / `n_tokens` / `offset_map`。
 
@@ -209,7 +211,8 @@ $env:PYTHONPATH = "src"; $PY -m pytest tests -q -p no:cacheprovider
 | D12 | **A8 的结论只用于**筛选配置范围**，不作为最终定论** | `oracle_recall@k` 与 embedding 无关，只能给出上界。硬/软边界、512 vs 768 这类取舍取决于 BGE 在 300 vs 480 token 上的信噪比，必须由 M2 的真实 recall 复核 |
 | D13 | **`para_spans` 一段一项**（`len(para_spans) == len(para_ids)`） | 原先按句子写入导致重复；下游若 `zip(para_ids, para_spans)` 会错位。已由 `spans.paired` / `spans.unique` 两项校验强制 |
 | D14 | **评测 recall 一律以 `para_id` 为单位，分母 2,991** | gold 是段落级、chunk 粒度随配置变；607 道无 gold 的题（含 331 道不可回答）必须分流，不能当 0 分。详见 `data_contract.md` §7 |
-| D15 | **`data/processed/` 全目录 gitignore，需要入库的产物放 `docs/`** | `grid_results*.csv` 已复制到 `docs/`；`.workbuddy/` 也加入 gitignore（本地会话数据） |
+| D15 | **`data/processed/` 全目录 gitignore，需要入库的产物放 `docs/`** | `grid_results*.csv` 已复制到 `docs/`；`.workbuddy/` 也加入 gitignore（本地会话数据）。**已被 D16 修订** |
+| D16 | **数据改为"默认忽略、仅放行开箱即用最小交付集"（约 59 MB）** | 用户指出"clone 后要能直接开工"。放行 `paragraphs.parquet` / `qa.*` / 默认配置 `chunks.parquet` + `qa_with_gold.jsonl` / manifests / `tokenizer.json`；原始 JSON、硬边界消融、jsonl 副本、PubMedQA 保持忽略（可重新生成） |
 
 ---
 

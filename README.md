@@ -68,24 +68,32 @@
 
 ## 3. 数据与交付物在哪
 
-> ⚠️ **数据不入库**（体积大，`data/` 整个目录在 `.gitignore` 里）。
-> clone 之后必须重跑管道（见 §6），或找 Member 1 要生成好的 `data/processed/`。
+> ✅ **核心产物已入库，clone 后开箱即用**（约 59 MB）。下游四人无需重跑管道即可直接开工。
+> 未入库的是：原始数据（S3 可下载）、消融对照配置、jsonl 副本——需要时按 §6 重新生成。
 
-| 路径 | 内容 | 行数 |
-|---|---|---|
-| `data/processed/paragraphs.parquet` | 段落级坐标系（**所有下游的锚点**） | 61,317 |
-| `data/processed/qa.parquet` / `.jsonl` | 评测金标准 | 3,598 |
-| `data/processed/chunks/size512_ov102_soft/chunks.parquet` / `.jsonl` | **默认配置的 chunk 表** | 17,653 |
-| `data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl` | 加了 `gold_chunk_ids` | 3,598 |
-| `data/processed/chunks/<config>/manifest.json` | 配置哈希 + 校验结果 + 统计 | — |
-| `docs/data_contract.md` | **字段语义 / 坐标系 / 评测口径 / 防泄漏红线** | — |
+| 路径 | 内容 | 行数 | 是否入库 |
+|---|---|---|---|
+| `data/processed/paragraphs.parquet` | 段落级坐标系（**所有下游的锚点**） | 61,317 | ✅ |
+| `data/processed/qa.parquet` / `qa_dataset.jsonl` | 评测金标准 | 3,598 | ✅ |
+| `data/processed/chunks/size512_ov102_soft/chunks.parquet` | **默认配置的 chunk 表** | 17,653 | ✅ |
+| `data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl` | 加了 `gold_chunk_ids` | 3,598 | ✅ |
+| `data/processed/chunks/size512_ov102_soft/manifest.json` | 配置哈希 + 校验结果 + 统计 | — | ✅ |
+| `data/raw/bge_tok/tokenizer.json` | BGE tokenizer 单文件（重跑管道必需） | — | ✅ |
+| `data/processed/chunks/size512_ov102_hard/` | 硬边界消融对照 | 23,851 | ❌ 需重跑 |
+| `data/processed/pubmedqa/` | PubMedQA 副线 | — | ❌ 需重跑 |
+| `data/raw/qasper/` | 原始 QASPER JSON + tgz | — | ❌ 需下载 |
+| `docs/data_contract.md` | **字段语义 / 坐标系 / 评测口径 / 防泄漏红线** | — | ✅ |
 
 **两种格式（parquet / jsonl）是同一份数据的两个视图，字段与类型完全一致。**
 parquet 里 `para_spans` 存 JSON 文本（pyarrow 无法推断元组列），jsonl 里是真正的数组。
+仓库里默认只存 parquet（体积小一半）；需要 jsonl 时 `chunks.jsonl` / `qa_dataset.jsonl` 各是一行代码可生成（`03_build_chunks.py` 会双写）。
 
 ---
 
 ## 4. 下游怎么接
+
+> **读这些 parquet/jsonl 的最小依赖**：`pip install pandas pyarrow`。
+> 要重跑 M1 管道：`pip install -e ".[dev]"`（Python ≥ 3.11，`pyproject.toml` 已声明全部依赖）。
 
 ### Member 2（Dense Retriever）
 读 `chunks.parquet` 的 `chunk_id` + `text` + `n_tokens`，用 BGE 编码、建 FAISS。
@@ -150,6 +158,9 @@ recall = len(hit & set(qa[qid]["gold_para_ids"])) / len(gold)
 ---
 
 ## 6. 复现
+
+> **如果你只是用现成数据，跳过本节**——`data/processed/` 里的核心产物已经入库。
+> 下面命令只有在「换参数重新切分」「重新生成被忽略的文件」「从零复现」时才需要。
 
 ```powershell
 $PY = C:\Users\zxt123\.workbuddy\binaries\python\envs\ragdata\Scripts\python.exe
