@@ -1,113 +1,97 @@
-# RAG on QASPER · 项目文档
+# RAG on QASPER & PubMedQA · 项目文档
 
-> 五人协作的检索增强生成（RAG）课程项目。本文件是**项目总入口**，由 Member 1 维护。
-> 当前状态：**数据与 Chunking 阶段已交付**（tag `data-v1.0`，已合入 `main`）。
-> 最后更新：2026-11-01
+> 五人协作的检索增强生成（RAG）课程项目。本文件是**项目总入口**。
+> 当前状态：**数据与 Chunking 阶段已完成**（QASPER + PubMedQA 两个数据集）。
 
 ---
 
 ## 1. 项目与分工
 
-| 成员 | 职责 | 主要产物 |
-|---|---|---|
-| **Member 1** | **数据预处理与 Chunking** | `paragraphs` / `qa` / `chunks` 三张表、`data_contract.md`、参数实验 |
-| Member 2 | Dense RAG baseline | BGE 编码 + FAISS 索引 + Top-K 检索 |
-| Member 3（Graph） | 论文关系数据 + 图检索 | 边表、1-hop / 2-hop / PPR |
-| Member 4 | 融合与重排序 | RRF / Cross-Encoder |
-| Member 5 | 统一评测与消融 | 指标实现、实验矩阵、报告 |
-
-**数据集**：QASPER v0.3 —— 1,169 篇 NLP 论文 / 3,598 个问题，带**段落级**证据标注。
-主任务是「给定问题，在论文中检索证据段并生成答案」。
-
----
-
-## 2. Member 1 这一阶段完成了什么
-
-### 2.1 一句话概括
-
-**把 QASPER 的原始 JSON 变成三张下游可直接使用、且被机器校验过的表**，并用模型无关的指标定下了切分参数——顺带量化了「切分到底给下游留了多少空间」。
-
-### 2.2 十个阶段
-
-| # | 阶段 | 结论 / 产物 |
-|---|---|---|
-| A1 | 工程基建 + Schema 摸底 | `dataset_profile.md`：确认 `paragraphs` 是纯字符串列表、`section_name` 篇内重名率 0% |
-| A2 | 清洗（带 offset map） | 无损契约全过；S2ORC 占位符 `BIBREF/TABREF/FIGREF` 共 58,354 处替换 |
-| A3 | 展平为段落索引 | `paragraphs.parquet`：**61,317 段 / 6,433,441 tokens** |
-| A4 | 证据对齐 | 文本 evidence → 段落坐标，**对齐率 99.97%**（仅 2 条失败） |
-| A5 | Chunker | `SentenceAwareTokenChunker`：句级切分 + token 预算 + 段落溯源 |
-| A6 | chunk 表导出 + 校验 | 不变量全过：重复 id 0 / 空 chunk 0 / 超预算 0 / 内容缺口 0 |
-| A7 | 段级金标准 → chunk 级 | 2,991 题全部映射成功，**0 条不可达** |
-| A8 | 切分参数实验 | 24 组网格 + 硬/软边界消融，引入 `oracle_recall@k` 召回上界 |
-| A9 | 交付契约 | `data_contract.md` + 可执行校验器（24 项检查 / 53 条单测） |
-| B1–B4 | PubMedQA 副线 | 转成同一 schema，验证管道可迁移；**结论是它承载不了 chunk 级实验** |
-
-### 2.3 关键实测数字
-
-| 指标 | 值 |
+| 成员 | 职责 |
 |---|---|
-| 论文 / 问题 / 段落 | 1,169 / 3,598 / 61,317 |
-| 正文 token | 6,433,441（mean 5,504 / 篇，max 36,529） |
-| **可用评测分母** | **2,991**（不是 3,598，原因见 §5.1） |
-| 默认切分配置 | `size=512, overlap=102, section=soft` → **17,653 chunks** |
-| 索引放大 | 1.315× |
-| 段落被切散比例（`torn`） | 3.66% |
-| 答案与证据同在 chunk 比例 | **94.54%** |
-| **召回上界 `oracle_recall@1 / @5`** | **81.62% / 99.97%** |
-| 单测 | `pytest` **53 passed** |
+| Member 1 | 数据预处理与 Chunking（已完成） |
+| Member 2 | Dense RAG baseline |
+| Member 3 | Graph |
+| Member 4 | Graph |
+| Member 5 | Graph |
 
-### 2.4 三个容易被忽略的判断
-
-**① 段落级 provenance 是整个评测的地基。** 每个 chunk 都记录 `para_ids` + `para_spans`，所以 chunk 级的检索结果能还原成段落级证据。没有它，`chunk_id` 会随 `chunk_size` 变化，**跨配置的指标根本不可比**。
-
-**② `oracle_recall@k` 把「检索器弱」和「切分把答案扔了」分开了。** 它假设排序器提前知道答案、只受切分约束。结论是：**k≥5 时切分不是瓶颈**（`or@5` ≥99.2%），瓶颈在排序。这意味着不必在切分参数上继续投入。
-
-**③ overlap 的真实作用是「修复边界撕裂」，不是「增加上下文」。** 它把下一个 chunk 的起点推到段落起始之前，让段落完整落进后一个 chunk：size=512 时 `torn` 从 14.26% 降到 2.00%。
+> Member 3 / 4 / 5 的具体分工待定，暂不细分。
 
 ---
 
-## 3. 数据与交付物在哪
+## 2. 数据集
 
-> ✅ **核心产物已入库，clone 后开箱即用**（约 59 MB）。下游四人无需重跑管道即可直接开工。
-> 未入库的是：原始数据（S3 可下载）、消融对照配置、jsonl 副本——需要时按 §6 重新生成。
+两个数据集均已处理成统一 schema（同一套 `paragraphs` / `qa` / `chunks` 三张表），可按需选用：
 
-| 路径 | 内容 | 行数 | 是否入库 |
-|---|---|---|---|
-| `data/processed/paragraphs.parquet` | 段落级坐标系（**所有下游的锚点**） | 61,317 | ✅ |
-| `data/processed/qa.parquet` / `qa_dataset.jsonl` | 评测金标准 | 3,598 | ✅ |
-| `data/processed/chunks/size512_ov102_soft/chunks.parquet` | **默认配置的 chunk 表** | 17,653 | ✅ |
-| `data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl` | 加了 `gold_chunk_ids` | 3,598 | ✅ |
-| `data/processed/chunks/size512_ov102_soft/manifest.json` | 配置哈希 + 校验结果 + 统计 | — | ✅ |
-| `data/raw/bge_tok/tokenizer.json` | BGE tokenizer 单文件（重跑管道必需） | — | ✅ |
-| `data/processed/chunks/size512_ov102_hard/` | 硬边界消融对照 | 23,851 | ❌ 需重跑 |
-| `data/processed/pubmedqa/` | PubMedQA 副线 | — | ❌ 需重跑 |
-| `data/raw/qasper/` | 原始 QASPER JSON + tgz | — | ❌ 需下载 |
-| `docs/data_contract.md` | **字段语义 / 坐标系 / 评测口径 / 防泄漏红线** | — | ✅ |
+| 属性 | QASPER v0.3 | PubMedQA-1k |
+|---|---|---|
+| 论文 / 问题 | 1,169 / 3,598 | 1,000 / 1,000 |
+| 段落 | 61,317 | 3,358 |
+| 正文 token | 6,433,441 | 307,024 |
+| 平均 token / 篇 | 5,504 | 307 |
+| 证据标注 | 段落级（2,991 题可用） | 无（仅 yes/no/maybe 判定） |
+| 默认切分下 chunks/篇 | 15.10 | 1.02 |
 
-**两种格式（parquet / jsonl）是同一份数据的两个视图，字段与类型完全一致。**
-parquet 里 `para_spans` 存 JSON 文本（pyarrow 无法推断元组列），jsonl 里是真正的数组。
-仓库里默认只存 parquet（体积小一半）；需要 jsonl 时 `chunks.jsonl` / `qa_dataset.jsonl` 各是一行代码可生成（`03_build_chunks.py` 会双写）。
+两者的任务形态不同：QASPER 是「给定问题，在论文中检索证据段落」；PubMedQA 是「给定摘要做三分类」，且不带段落级证据标注。下游可依据实验目标选择其一或两者并用。
 
 ---
 
-## 4. 下游怎么接
+## 3. Member 1 完成了什么
 
-> **读这些 parquet/jsonl 的最小依赖**：`pip install pandas pyarrow`。
-> 要重跑 M1 管道：`pip install -e ".[dev]"`（Python ≥ 3.11，`pyproject.toml` 已声明全部依赖）。
+| 阶段 | 产出 |
+|---|---|
+| 摸底 → 清洗 → 展平 → 证据对齐 | `paragraphs.parquet`（61,317 段）+ `qa.parquet`（3,598 题，对齐率 99.97%） |
+| 切分 → chunk 表 → 金标准映射 | 默认配置 `size=512 / overlap=0.2 / soft` → **17,653 chunks**，2,991 题全部可映射 |
+| 切分参数实验 | 24 组网格 + 硬/软边界消融（`docs/chunk_grid_results.md`） |
+| 交付契约 | `data_contract.md` + 可执行校验器（24 项检查，53 条单测） |
+| PubMedQA 副线 | 转成同一 schema（1,000 题 / 3,358 段 / 1,024 chunks） |
 
-### Member 2（Dense Retriever）
-读 `chunks.parquet` 的 `chunk_id` + `text` + `n_tokens`，用 BGE 编码、建 FAISS。
-**`n_tokens` 是 BGE tokenizer 口径，最大 511，不会超 512 上限。**
+关键数字（QASPER）：索引放大 1.315×；段落被切散比例 3.66%；答案与证据同 chunk 比例 94.54%；`oracle_recall@1 / @5` = 81.62% / 99.97%。
 
-### Member 3（Graph）
-`chunks.parquet` 里已有 `section_path`（S2ORC 层级，如 `Experiments > Ablation`）、`prev_chunk_id` / `next_chunk_id`、`para_ids` —— **文内结构边不需要额外数据**。
-**但跨文档边要自己解决**：QASPER 的 1,169 篇论文之间**直接互引实测为 0**（Semantic Scholar + OpenAlex 双源抽样验证），只能用文献耦合 / 实体共现 / 语义 kNN。详见 [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md)。
+---
 
-### Member 4（融合重排）
-`chunk_id` 作唯一主键即可。各路召回结果统一按 `chunk_id` 合并，不要自己拼 id。
+## 4. 数据与交付物
 
-### Member 5（评测）
-读 `qa.parquet` + 本配置的 `qa_with_gold.jsonl`。**recall 的正确算法只有一种**：
+以下产物**均已入库，clone 后直接可用**。
+
+### QASPER
+
+| 路径 | 内容 | 行数 |
+|---|---|---|
+| `data/processed/paragraphs.parquet` | 段落级坐标系 | 61,317 |
+| `data/processed/qa.parquet` / `qa_dataset.jsonl` | 评测金标准 | 3,598 |
+| `data/processed/chunks/size512_ov102_soft/chunks.parquet` | 默认配置 chunk 表 | 17,653 |
+| `data/processed/chunks/size512_ov102_soft/qa_with_gold.jsonl` | 加了 `gold_chunk_ids` | 3,598 |
+| `data/processed/chunks/size512_ov102_soft/manifest.json` | 配置哈希 + 校验结果 | — |
+
+### PubMedQA
+
+| 路径 | 内容 | 行数 |
+|---|---|---|
+| `data/processed/pubmedqa/paragraphs.parquet` | 段落级坐标系 | 3,358 |
+| `data/processed/pubmedqa/qa.parquet` / `qa_dataset.jsonl` | 题目（yes/no/maybe） | 1,000 |
+| `data/processed/pubmedqa/chunks/pubmedqa_512_ov102/chunks.parquet` | chunk 表 | 1,024 |
+| `data/processed/pubmedqa/chunks/pubmedqa_512_ov102/qa_with_gold.jsonl` | chunk 级映射 | 1,000 |
+| `data/raw/pubmedqa/ori_pqal.json` | 原始数据（复现用） | — |
+
+其他公共资源：`data/raw/bge_tok/tokenizer.json`（重新跑管道必需）。
+
+> 两种格式（parquet / jsonl）是同一份数据的两个视图，字段与类型一致。字段语义见 [`docs/data_contract.md`](docs/data_contract.md)。
+
+---
+
+## 5. 下游怎么接
+
+读这些文件的最小依赖：`pip install pandas pyarrow`（重跑管道：`pip install -e ".[dev]"`，Python ≥ 3.11）。
+
+### 检索（Dense / Graph 通用）
+读 `chunks.parquet` 的 `chunk_id` + `text` + `n_tokens` 编码、建索引。
+
+### 建图（Graph）
+`chunks.parquet` 已含 `section_path`（S2ORC 层级）、`prev_chunk_id` / `next_chunk_id`、`para_ids`，文内结构边无需额外数据。跨文档边需自建：QASPER 的论文之间直接互引实测为 0，只能用文献耦合 / 实体共现 / 语义 kNN（见 [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md)）。
+
+### 评测
+读 `qa.parquet` + 对应配置的 `qa_with_gold.jsonl`。recall 以段落为单位：
 
 ```python
 retrieved = topk(...)                       # list[chunk_id]
@@ -117,112 +101,94 @@ for cid in retrieved:
 recall = len(hit & set(qa[qid]["gold_para_ids"])) / len(gold)
 ```
 
-分母取 `zero_gold_reason == ""` 的 **2,991** 题。
+QASPER 的 recall 分母取 `zero_gold_reason == ""` 的 **2,991** 题。
 
 ---
 
-## 5. 接手前必读：注意事项
+## 6. 注意事项
 
-> 每条都写清了「踩了会怎样」，按影响排序。
+### 评测口径
 
-### 5.1 评测口径（最容易错，错了指标全废）
+1. **QASPER 分母是 2,991，不是 3,598。** 607 道题无证据段：331 不可回答、100 未选证据、174 仅图表、2 对齐失败。
+2. **recall 以 `para_id` 为单位。** gold 是段落级；`chunk_id` 随配置变，跨 size 用 chunk 级 recall 不可比。
+3. **多段证据题占 37.2%**（1,112 / 2,991）；仅 19.5% 的题能在单个 chunk 内看全证据（每题 gold chunk 数 mean 1.76 / max 10）。建议汇报 top-k 而非只 top-1。
+4. **`co_split_rate` = 94.54%**：约 5.5% 的题其答案与证据被切到不同 chunk。
 
-1. **分母是 2,991，不是 3,598。** 607 道题没有 gold 证据段：331 道不可回答、100 道可回答但标注者未选证据、174 道证据只有图表、2 道对齐失败。**把这 607 题当 0 分会系统性拉低 recall，而且看起来像是检索出了问题。**
-2. **recall 一律以 `para_id` 为单位。** gold 是段落级的；`chunk_id` 随配置变，用 chunk 级 recall 跨 size 比较是错的。
-3. **top-1 在 QASPER 上没有意义。** 只有 **19.5%** 的题能把全部证据装进 1 个 chunk（每题 gold chunk 数 mean 1.76 / max 10）。汇报必须给 top-k。
-4. **`co_split_rate` = 94.54%**，即约 5.5% 的题**即使检索完美也必然答错**——证据和答案被切到了不同 chunk。报端到端指标时要单独说明，否则会被误读成系统缺陷。
+### 防泄漏
 
-### 5.2 防泄漏（错了看不出来）
+5. **`qa*` 文件只用于评测**，不得进入索引构建、建图、融合重排。
+6. **列名检查挡不住逻辑泄漏**：用「是否含 gold 段落」当特征、或调参后再在同一份 dev 上报指标，机器发现不了。判据：删掉 `qa.parquet` 后建图流程若跑不起来，即是泄漏。
 
-5. **`qa*` 四份文件只能给 Member 5。** 不得进入 M2 的索引构建、M3 的建图、M4 的融合重排。
-6. **列名检查挡不住逻辑泄漏。** 校验器会拒收含 `gold` / `answer` / `evidence` / `extractive` 的 public 列，但「用是否含 gold 段落当特征」、或「用标注调完参再在同一份 dev 上报指标」，机器发现不了。**自查判据：删掉 `qa.parquet` 后建图流程如果跑不起来，就是泄漏了。**
+### 字段语义
 
-### 5.3 字段语义（错了不报错，只是结果错）
+7. **`para_spans` 的偏移相对「段落自己的文本」**；`char_start` / `char_end` 相对**论文扁平文本**。两者不能混用。
+8. **检索用 `text_clean`**，`text_raw` 含 `[REF]` / `[TABLE]` / `[FIGURE]` 占位符。
+9. **`len(para_spans) == len(para_ids)`，每段一项。**
+10. **`chunk_id` 只在同一配置内稳定**，换 `chunk_size` 后 `c001` 指向不同文本。
 
-7. **`para_spans` 的偏移相对「段落自己的文本」**，不是相对 chunk。`char_start/char_end` 才是相对的**论文扁平文本**坐标。两者不能混用。
-8. **`text_raw` 含占位符**（`[REF]` / `[TABLE]` / `[FIGURE]`），检索一律用 `text_clean`。
-9. **`para_spans` 一段一项**（`len(para_spans) == len(para_ids)`）。早期版本按句子写入导致重复，已修，别按旧假设写代码。
-10. **`chunk_id` 只在同一配置内稳定**，换 `chunk_size` 后 `c001` 指向的文本完全不同。
+### 工程约定
 
-### 5.4 工程约定（错了会返工）
-
-11. **overlap 造成的「相邻 chunk 文本重复」是设计意图，不是 bug。** 段落被复制到两个 chunk（`paras_dup_pct`）和段落被切散（`paras_torn_pct`）是两件事，混为一谈会把 overlap 误判成有害。
-12. **没有 test split。** 官方 v0.3 包只有 train（888 篇）+ dev（281 篇），test（416 篇）的标注不在包里。评测只能用 dev，或从 train 再切一份 holdout。
-13. **改 schema 必须三处同改**：`docs/data_contract.md` + `src/rag_data/validate.py` 的 `CHUNK_REQUIRED` + 校验项，然后重跑一次全量校验。**不允许只改代码不改契约。**
-
-### 5.5 结论的边界（别过度推广）
-
-14. **`size=512 / overlap=0.2 / soft` 是数据层最优，不是最终结论。** 它的依据是 `oracle_recall`（与 embedding 无关的上界），**硬/软 section 边界的取舍必须由 Member 2 的真实 recall 复核**：硬边界给出的 chunk 更短但更完整（`torn` 2.00% vs 3.66%），软边界给出的更长但更容易切散。
-15. **PubMedQA 只能当冒烟测试，不能当第二主实验。** 它平均 307 token/篇，默认 512 切分下 **976/1,000 篇被切成恰好 1 个 chunk**，chunk 网格与图检索都无从做起。详见 [`docs/pubmedqa_report.md`](docs/pubmedqa_report.md)。
+11. **overlap 造成的相邻 chunk 文本重复是设计意图**；「段落被复制」（`paras_dup_pct`）与「段落被切散」（`paras_torn_pct`）是两件事。
+12. **没有 test split**：官方 v0.3 包只有 train（888 篇）+ dev（281 篇），test 标注不在包内。
+13. **改 schema 三处同改**：`docs/data_contract.md` + `src/rag_data/validate.py` 的 `CHUNK_REQUIRED` + 校验项，再跑一次全量校验。
 
 ---
 
-## 6. 复现
+## 7. 复现
 
-> **如果你只是用现成数据，跳过本节**——`data/processed/` 里的核心产物已经入库。
-> 下面命令只有在「换参数重新切分」「重新生成被忽略的文件」「从零复现」时才需要。
+> 已入库的数据可直接用，无需重跑。下面命令仅在换参数、重新生成或从零复现时需要。
 
 ```powershell
 $PY = C:\Users\zxt123\.workbuddy\binaries\python\envs\ragdata\Scripts\python.exe
 $env:PYTHONPATH = "src"
 
-# 0) 下载 BGE tokenizer 为单文件（绕开 HF 缓存）
-$PY scripts/dev/fetch_tokenizer.py --out data/raw/bge_tok/tokenizer.json
-
-# 1) 摸底
+# QASPER
 $PY scripts/00_profile_dataset.py --data-dir data/raw/qasper --out-dir docs `
     --tokenizer data/raw/bge_tok/tokenizer.json
-
-# 2) 清洗 + 展平 → paragraphs.parquet
 $PY scripts/01_prepare_corpus.py --data-dir data/raw/qasper `
     --processed-dir data/processed --out-dir docs `
     --tokenizer data/raw/bge_tok/tokenizer.json
-
-# 3) 证据对齐 → qa.parquet（对齐率应为 99.97%）
 $PY scripts/02_align_evidence.py --data-dir data/raw/qasper `
     --processed-dir data/processed --out-dir docs
-
-# 4) 切分 → chunks（应得到 17,653 条）
 $PY scripts/03_build_chunks.py --chunk-size 512 --overlap 0.2 --section-boundary soft `
     --name size512_ov102_soft --tokenizer data/raw/bge_tok/tokenizer.json `
     --processed-dir data/processed --out-dir docs
-
-# 5) 契约校验（应为 24 PASS / 0 FAIL）
 $PY scripts/05_validate_contract.py --processed-dir data/processed `
-    --chunks-dir data/processed/chunks/size512_ov102_soft `
     --out docs/contract_validation.md
 
-# 6) 单测（应为 53 passed）
+# PubMedQA
+$PY scripts/10_prepare_pubmedqa.py --raw-dir data/raw/pubmedqa `
+    --processed-dir data/processed/pubmedqa --out-dir docs `
+    --tokenizer data/raw/bge_tok/tokenizer.json
+
+# 测试
 $PY -m pytest tests -q -p no:cacheprovider
 ```
 
-原始数据 `qasper-train-dev-v0.3.tgz`（10.8 MB）：
-`https://qasper-dataset.s3.us-west-2.amazonaws.com/qasper-train-dev-v0.3.tgz`
-解压后放到 `data/raw/qasper/`。
+原始数据来源：QASPER `https://qasper-dataset.s3.us-west-2.amazonaws.com/qasper-train-dev-v0.3.tgz`；
+PubMedQA `https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqal.json`（脚本会自动下载）。
 
 ---
 
-## 7. 还缺三个外部输入
+## 8. 待确认与文档地图
 
-这三项**不影响现在使用**（契约里都给了默认值），但会影响 schema 是否需要改第二遍：
+### 待确认（不影响当前使用，但可能影响 schema 是否要改第二遍）
 
-| # | 待确认 | 问谁 | 当前默认 |
-|---|---|---|---|
-| Q2 | 图建在 chunk 还是 paragraph 粒度、还需要哪些边 | Member 3 | 按 chunk；`para_ids` / `section_path` / `prev`-`next` 已够建文内边 |
-| Q3 | 生成时 top-k 几、token 预算多少 | Member 4 | 报告 k ∈ {3, 5, 10} |
-| Q4 | recall 聚合口径、`unanswerable` 是否进分母 | Member 5 | 已定：分母 2,991、题级 macro、`unanswerable` 转拒答指标 |
+| # | 事项 | 当前默认 |
+|---|---|---|
+| Q2 | 图建在 chunk 还是 paragraph 粒度、需要哪些边 | 按 chunk；文内边信息已齐 |
+| Q3 | 生成时 top-k 与 token 预算 | 报告 k ∈ {3, 5, 10} |
+| Q4 | recall 聚合口径、`unanswerable` 是否进分母 | 分母 2,991、题级 macro、不可回答转拒答指标 |
 
----
-
-## 8. 文档地图
+### 文档地图
 
 | 我想… | 读这份 |
 |---|---|
 | 接数据 / 查字段 / 确认评测口径 | [`docs/data_contract.md`](docs/data_contract.md) ← **权威口径** |
-| 看整体进度、决策记录、全部已知坑 | [`docs/PROGRESS.md`](docs/PROGRESS.md) |
-| 看切分参数怎么选的、召回上界 | [`docs/chunk_grid_results.md`](docs/chunk_grid_results.md) |
-| 确认这份数据能不能用 | [`docs/contract_validation.md`](docs/contract_validation.md) |
-| 做图检索、想知道有没有跨文档边 | [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md) |
-| 数据集本身长什么样 / 与论文是否一致 | [`docs/dataset_profile.md`](docs/dataset_profile.md)、[`docs/dataset_consistency.md`](docs/dataset_consistency.md) |
-| 用 PubMedQA 做第二数据集 | [`docs/pubmedqa_report.md`](docs/pubmedqa_report.md) |
-| 和 CG-RAG 论文的数字能不能比 | [`docs/跨数据集可比性说明.md`](docs/跨数据集可比性说明.md) |
+| 看整体进度、决策记录 | [`docs/PROGRESS.md`](docs/PROGRESS.md) |
+| 看切分参数怎么选、召回上界 | [`docs/chunk_grid_results.md`](docs/chunk_grid_results.md) |
+| 确认数据可用性 | [`docs/contract_validation.md`](docs/contract_validation.md) |
+| 做图检索、查跨文档边 | [`docs/citation_graph_probe.md`](docs/citation_graph_probe.md) |
+| 数据集本身长什么样 | [`docs/dataset_profile.md`](docs/dataset_profile.md)、[`docs/dataset_consistency.md`](docs/dataset_consistency.md) |
+| PubMedQA 的详细说明 | [`docs/pubmedqa_report.md`](docs/pubmedqa_report.md) |
+| 和 CG-RAG 论文的数字可比性 | [`docs/跨数据集可比性说明.md`](docs/跨数据集可比性说明.md) |

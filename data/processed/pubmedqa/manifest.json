@@ -1,0 +1,45 @@
+{
+  "dataset": "PubMedQA (PQA-L, 1k)",
+  "source": "https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqal.json",
+  "generated_at": "2026-11-01T05:57:54+00:00",
+  "split": "test",
+  "questions": 1000,
+  "papers": 1000,
+  "paragraphs": 3358,
+  "tokens": 307024,
+  "paragraphs_per_paper": {
+    "mean": 3.36,
+    "max": 9,
+    "distribution": {
+      "1": 1,
+      "2": 69,
+      "3": 720,
+      "4": 101,
+      "5": 34,
+      "6": 47,
+      "7": 22,
+      "8": 5,
+      "9": 1
+    }
+  },
+  "paragraph_tokens": {
+    "mean": 91.4,
+    "median": 77,
+    "p95": 218,
+    "max": 455
+  },
+  "tokens_per_paper": {
+    "mean": 307.0,
+    "max": 648
+  },
+  "decision_distribution": {
+    "yes": 552,
+    "no": 338,
+    "maybe": 110
+  },
+  "cleaner_hits": {
+    "nfkc": 16
+  },
+  "gold_paragraphs_available": false,
+  "note": "PubMedQA 标注的是 yes/no/maybe 判定，不是证据段落，因此 gold_para_ids 全部为空、zero_gold_reason=no_evidence。"
+}

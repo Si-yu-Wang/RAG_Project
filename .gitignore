@@ -30,6 +30,24 @@ data/processed/chunks/size512_ov102_soft/*
 data/raw/bge_tok/*
 !data/raw/bge_tok/tokenizer.json
 
+# PubMedQA-1k 副线（第二个数据集，留选择空间）
+!data/raw/pubmedqa/
+data/raw/pubmedqa/*
+!data/raw/pubmedqa/ori_pqal.json
+!data/processed/pubmedqa/
+data/processed/pubmedqa/*
+!data/processed/pubmedqa/paragraphs.parquet
+!data/processed/pubmedqa/qa.parquet
+!data/processed/pubmedqa/qa_dataset.jsonl
+!data/processed/pubmedqa/manifest.json
+!data/processed/pubmedqa/chunks/
+data/processed/pubmedqa/chunks/*
+!data/processed/pubmedqa/chunks/pubmedqa_512_ov102/
+data/processed/pubmedqa/chunks/pubmedqa_512_ov102/*
+!data/processed/pubmedqa/chunks/pubmedqa_512_ov102/chunks.parquet
+!data/processed/pubmedqa/chunks/pubmedqa_512_ov102/qa_with_gold.jsonl
+!data/processed/pubmedqa/chunks/pubmedqa_512_ov102/manifest.json
+
 # 派生大文件：不直接入库，需时从 parquet / 原始数据重新生成
 *.jsonl.bak
 *.faiss

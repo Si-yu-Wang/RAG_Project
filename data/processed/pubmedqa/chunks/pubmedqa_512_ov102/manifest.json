@@ -1,0 +1,45 @@
+{
+  "config_name": "pubmedqa_512_ov102",
+  "config": {
+    "chunk_size": 512,
+    "overlap_ratio": 0.2,
+    "overlap_tokens": null,
+    "min_chunk_tokens": 64,
+    "section_boundary": "soft",
+    "include_abstract": true,
+    "merge_short_tail": true,
+    "resolved_overlap_tokens": 102,
+    "chunker_version": "1.0.0"
+  },
+  "config_hash": "9febc4ee8cb3",
+  "generated_at": "2026-11-01T05:58:03+00:00",
+  "tokenizer": "tokenizers-file:tokenizer.json",
+  "chunks": 1024,
+  "papers": 1000,
+  "tokens_total": 310190,
+  "body_tokens": 307024,
+  "index_blowup": 1.01,
+  "avg_tokens": 302.9,
+  "median_tokens": 300,
+  "p95_tokens": 455,
+  "truncated_chunks": 0,
+  "checks": {
+    "chunks": 1024,
+    "duplicate_chunk_ids": 0,
+    "empty_chunks": 0,
+    "over_budget_chunks": 0,
+    "chunks_spanning_sections": 0,
+    "paragraphs_checked": 3358,
+    "paragraphs_with_boundary_gaps": 0,
+    "paragraphs_with_content_gaps": 0,
+    "broken_neighbour_links": 0
+  },
+  "gold": {
+    "questions": 1000,
+    "questions_with_gold_paras": 0,
+    "questions_gold_unreachable": 0,
+    "co_split_denom": 0,
+    "co_split_hit": 0,
+    "co_split_rate": 0.0
+  }
+}

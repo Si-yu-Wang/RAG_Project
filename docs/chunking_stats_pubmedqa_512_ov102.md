@@ -1,6 +1,6 @@
 # Chunking 统计 · `pubmedqa_512_ov102`
 
-> 2026-11-01T05:05:39+00:00　|　tokenizer `tokenizers-file:tokenizer.json`
+> 2026-11-01T05:58:03+00:00　|　tokenizer `tokenizers-file:tokenizer.json`
 > 配置：size=512，overlap=102，min=64，section=soft，abstract=含
 
 ## 1. 规模
