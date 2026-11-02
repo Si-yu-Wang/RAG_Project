@@ -1,0 +1,102 @@
+{
+  "metric_schema_version": "1.0",
+  "split": "dev",
+  "total_questions": 1005,
+  "eligible_questions": 890,
+  "excluded_by_reason": {
+    "no_evidence": 78,
+    "float_only": 35,
+    "align_fail": 2
+  },
+  "metrics": [
+    {
+      "k": 1,
+      "macro_paragraph_recall": 0.33697026268529384,
+      "mrr": 0.42134831460674155
+    },
+    {
+      "k": 3,
+      "macro_paragraph_recall": 0.6299692331280845,
+      "mrr": 0.5569288389513108
+    },
+    {
+      "k": 5,
+      "macro_paragraph_recall": 0.7732531718850291,
+      "mrr": 0.5836142322097378
+    },
+    {
+      "k": 10,
+      "macro_paragraph_recall": 0.9436512609810693,
+      "mrr": 0.6005814160870341
+    }
+  ],
+  "definitions": {
+    "recall": "Per-question union of para_ids from top-K chunks intersected with gold_para_ids, divided by gold size; macro average.",
+    "mrr": "Reciprocal rank of first chunk overlapping at least one gold paragraph within top-K; zero if none; macro average on the same eligible questions.",
+    "eligibility": "zero_gold_reason is empty; no-gold questions excluded, not scored zero."
+  },
+  "retrieval_ms": {
+    "mean": 10.148820595755543,
+    "median": 10.119899990968406
+  },
+  "config": {
+    "top_k": 10,
+    "scope": "paper",
+    "context_chars": 12000,
+    "task": "qa",
+    "retriever": {
+      "method": "dense",
+      "corpus_sha256": "0959a33b65530b348bfc530aad95dfbfde6a08de8148ea02eb452135613cc044",
+      "data": {
+        "format": "parquet",
+        "split": "dev",
+        "text_field": "text",
+        "upstream": {
+          "config_name": "size512_ov102_soft",
+          "config_hash": "9febc4ee8cb3",
+          "config": {
+            "chunk_size": 512,
+            "overlap_ratio": 0.2,
+            "overlap_tokens": null,
+            "min_chunk_tokens": 64,
+            "section_boundary": "soft",
+            "include_abstract": true,
+            "merge_short_tail": true,
+            "resolved_overlap_tokens": 102,
+            "chunker_version": "1.0.0"
+          },
+          "tokenizer": "tokenizers-file:tokenizer.json",
+          "manifest_sha256": "98115567d9cc6e459147e8d7c924bb19055299e6ff228c9963aaf130faabffc0"
+        }
+      },
+      "parameters": {
+        "encoder": {
+          "model": "BAAI/bge-small-en-v1.5",
+          "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+          "query_instruction": "Represent this sentence for searching relevant passages: ",
+          "max_length": 512,
+          "batch_size": 32
+        },
+        "index_type": "IndexFlatIP",
+        "metric": "cosine"
+      }
+    },
+    "generator": {
+      "provider": "preview",
+      "model": null
+    },
+    "prompt_version": "evidence-only-v1"
+  },
+  "index_count": 3940,
+  "provenance": {
+    "qa_sha256": "365546ba8756eaf6c9df5d0a01c1a13aad92a694a1b645e42f76fcd1eba2ad8d",
+    "predictions_sha256": "f782a50f9630f6adb9e0e0fe7bf60281549d86a28dfb75fbd14fc87cf5049cfc",
+    "index_manifest_sha256": "d44329f3d135a2f94061f8435e2afcea1593263bf0e0ce8ee6c99f719e4e92b5"
+  },
+  "limitations": [
+    "Within-paper retrieval, not cross-paper retrieval.",
+    "Paragraph overlap counts as retrieval relevance even when a chunk contains only part of a paragraph.",
+    "No answer quality or LLM evaluation; preview output is permitted only for retrieval metrics.",
+    "All cutoffs are prefixes of the same recorded Top-K run, not separate generation experiments."
+  ]
+}

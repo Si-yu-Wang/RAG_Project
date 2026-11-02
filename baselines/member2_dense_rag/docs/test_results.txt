@@ -30,8 +30,19 @@ test_bad_backend_results_rejected (test_pipeline.PipelineTests.test_bad_backend_
 test_generic_input_validation (test_pipeline.PipelineTests.test_generic_input_validation) ... ok
 test_global_passes_no_paper_filter (test_pipeline.PipelineTests.test_global_passes_no_paper_filter) ... ok
 test_non_json_config_rejected (test_pipeline.PipelineTests.test_non_json_config_rejected) ... ok
+test_hand_calculated_macro_recall_and_mrr (test_retrieval_metrics.RetrievalMetricsTests.test_hand_calculated_macro_recall_and_mrr) ... ok
+test_invalid_ks_and_insufficient_depth_fail (test_retrieval_metrics.RetrievalMetricsTests.test_invalid_ks_and_insufficient_depth_fail) ... ok
+test_legacy_export_cli_remains_supported (test_retrieval_metrics.RetrievalMetricsTests.test_legacy_export_cli_remains_supported) ... ok
+test_missing_extra_and_duplicate_predictions_fail (test_retrieval_metrics.RetrievalMetricsTests.test_missing_extra_and_duplicate_predictions_fail) ... ok
+test_mixed_config_and_corrupt_corpus_fail (test_retrieval_metrics.RetrievalMetricsTests.test_mixed_config_and_corrupt_corpus_fail) ... ok
+test_no_gold_returns_null_not_zero (test_retrieval_metrics.RetrievalMetricsTests.test_no_gold_returns_null_not_zero) ... ok
+test_paragraph_deduplication_and_first_rank (test_retrieval_metrics.RetrievalMetricsTests.test_paragraph_deduplication_and_first_rank) ... ok
+test_score_cli_creates_reports_without_overwrite (test_retrieval_metrics.RetrievalMetricsTests.test_score_cli_creates_reports_without_overwrite) ... usage: python.exe -m unittest [-h] {export,score} ...
+python.exe -m unittest: error: Output already exists: C:\Users\RAIDER~1\AppData\Local\Temp\tmphh6hfoo6\metrics.json
+ok
+test_tampered_evidence_and_rank_fail (test_retrieval_metrics.RetrievalMetricsTests.test_tampered_evidence_and_rank_fail) ... ok
 
 ----------------------------------------------------------------------
-Ran 22 tests in 0.174s
+Ran 31 tests in 0.227s
 
 OK

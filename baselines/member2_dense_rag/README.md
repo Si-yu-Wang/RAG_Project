@@ -1,6 +1,6 @@
 # 通用 RAG Baseline：可替换检索器与生成器
 
-版本 0.3.1。`Baseline` 统一执行 **检索 → 上下文组织 → 生成 → 结果记录**，不依赖具体检索算法。内置 DenseRetriever 使用 BGE + FAISS；图检索、融合检索通过相同协议接入。
+版本 0.4.0。`Baseline` 统一执行 **检索 → 上下文组织 → 生成 → 结果记录**，不依赖具体检索算法。内置 DenseRetriever 使用 BGE + FAISS；图检索、融合检索通过相同协议接入。
 
 本包包含通用流程和真实 Dense 实现，**不包含真实图检索或融合算法**。自定义示例使用预计算结果演示适配方式。preview 生成器不调用 LLM，不能用其答案做质量评测。
 
@@ -29,7 +29,7 @@
 ```powershell
 $DATA = "D:/projects/RAG_Project"
 
-# 评测侧准备无答案请求；这是唯一读取 QA 的步骤
+# 评测侧准备无答案请求；索引/推理不读取 QA，后续评分由评测入口读取 QA
 .venv/Scripts/python -m dense_rag.evaluation --qa "$DATA/data/processed/qa.parquet" --split dev --output artifacts/qasper_dev_requests.jsonl
 
 # 索引只消费公开 chunks；过滤 dev 不依赖 QA
@@ -277,7 +277,7 @@ index.faiss、chunks.jsonl、manifest.json 必须一起交付。载入校验 has
 
 验证包含 Dense 回归、没有 manifest/encoder 的自定义检索器、非法返回值和全库范围等测试，见 [验证记录](docs/验证记录.md)。原理与设计补充见 [详细说明](docs/Member2_详细说明.md)。
 
-人工示例及两套上游真实数据的小样本均已实际运行 BGE 检索。预计算适配示例、HTTP 模拟测试不代表真实图算法或 LLM 服务已联调。正式质量评测需真实数据与生成服务，并排除 provider=preview 的答案。
+人工示例及两套上游真实数据的小样本均已实际运行 BGE 检索。预计算适配示例、HTTP 模拟测试不代表真实图算法或 LLM 服务已联调。检索评测只需要真实数据、检索输出及 gold，可以使用 preview 运行的检索结果。答案质量评测才需要真实生成服务，必须排除 provider=preview 的答案。
 
 
 ## 10. 0.3.1 修复及正式上传
@@ -288,4 +288,69 @@ index.faiss、chunks.jsonl、manifest.json 必须一起交付。载入校验 has
 
 上传时使用发布包里的 baselines 文件夹，放在仓库根目录。不要上传 ZIP 本身、.venv、artifacts、模型缓存或密钥。GitHub 网页上传不会自动执行 .gitignore，所以应直接使用已整理的发布包。
 
-已完成真实 QASPER dev 的 3,940 个 chunks 建库，并验证前 5 个真实问题各返回 5 个片段。此处是流程验证，不是全量质量评分。真实 LLM、完整 dev 检索评分和真实图检索仍未验证。
+已完成真实 QASPER dev 的 3,940 个 chunks 建库，并验证前 5 个真实问题各返回 5 个片段。此处是流程验证，不是全量质量评分。0.4.0 已完成完整 dev 检索评分，见下一节；真实 LLM 和真实图检索仍未验证。
+
+
+## 11. 完整检索质量评测（0.4.0）
+
+本版本内置多 K Recall/MRR 评测，不需要下载额外脚本。不调用 LLM，不加载 BGE，不重建索引。`evaluation export` 用于导出请求；`evaluation score` 用于评分；旧版不带 export 子命令的导出写法保持兼容。
+
+### 运行完整 dev 检索
+
+先按前文导出 1,005 个 dev 请求并建好 dev 索引。已有 Top-10 结果时直接跳到下一步，不要重复运行或覆盖。
+
+```powershell
+.venv/Scripts/python -m dense_rag.cli run --index artifacts/qasper_dev_index --questions artifacts/qasper_dev_requests.jsonl --top-k 10 --output artifacts/qasper_dev_top10_results.jsonl
+```
+
+### 计算指标并生成报告
+
+假设本模块在仓库 `baselines/member2_dense_rag`，QA 路径相对于本模块是 `../../data/processed/qa.parquet`：
+
+```powershell
+.venv/Scripts/python -m dense_rag.evaluation score --qa ../../data/processed/qa.parquet --predictions artifacts/qasper_dev_top10_results.jsonl --index artifacts/qasper_dev_index --split dev --ks 1 3 5 10 --output artifacts/qasper_dev_metrics.json --report artifacts/qasper_dev_report.md
+```
+
+如果使用仓库根目录的环境，命令开头改为 `../../.venv/Scripts/python.exe`。已有输出请换新名字；评测不会覆盖原文件。
+
+| 参数 / 入口 | 使用注意 |
+|---|---|
+| `--qa` | 评测侧金标准，支持 Parquet/JSONL；绝不传给索引或生成 |
+| `--predictions` | `run` 产生的完整 split 结果，不能用前 5 题代替完整 dev |
+| `--index` | 本次检索使用的索引目录；校验 manifest 与 chunks，依据其 para_ids 核实证据 |
+| `--split` | 默认 dev；题目分母按实际 split 动态计算 |
+| `--ks` | 默认 1 3 5 10；必须为正整数，不超过运行配置 top_k；自动去重排序 |
+| `--output` | 必填，新 JSON 文件，含精确值、分母、配置、耗时与输入 SHA-256 |
+| `--report` | 可选，新 Markdown 文件，提供便于阅读的指标表和口径说明 |
+| `retrieval_metrics.evaluate(...)` | Python API，返回报告 dict；同样执行完整性校验 |
+
+### 指标口径
+
+Recall@K：将前 K 个 chunks 的 para_ids 合并去重，与 gold_para_ids 相交，除以该题 gold 段落数，然后对题取 macro 平均。
+
+MRR@K：若 chunk 覆盖任意一个 gold 段落，则视为相关；取前 K 个结果中第一条相关 chunk 的排名倒数，无相关项为 0，再对同一批可评题取平均。该口径衡量首条相关 chunk 的位置，不代表已找到所有证据。
+
+只有 zero_gold_reason 为空字符串的题计入分母；其余按原因计数排除。没有可评题时输出 null/N/A，不输出误导性的 0 分。不同 K 是同一 Top-10 运行的前缀，不是重新运行生成器。
+
+评分使用完整 retrieved_chunks，而不是被上下文字符预算截断的 contexts；因此检索 Recall 不等于实际给 LLM 的上下文 Recall。部分段落被 chunk 覆盖也按该段落命中计，符合上游规则。
+
+### 失败处理与适用范围
+
+缺失/多余/重复问题、混合运行配置、split 或论文不一致、返回结果不完整、重复 chunk、rank 异常、证据正文/段落映射与索引不符、数据哈希不一致都会报错，避免静默漏算或错算。
+
+当前严格评分入口针对论文内 Top-K 检索，要求返回 `min(top_k, 本论文候选数)` 条。不能直接用于允许主动过滤到更少候选的图检索实验，或 global 检索；这些设置需明确改写协议和验证策略后再比较，不应为了通过校验伪造补齐。原有 `paragraph_recall` 保留为轻量兼容函数，正式 Dense 实验推荐用 score 入口。
+
+### 本次完整 dev 结果
+
+运行 1,005 题；有标准证据的 890 题计入指标；排除 115 题（no_evidence 78、float_only 35、align_fail 2）。
+
+| K | 段落级 Macro Recall@K | MRR@K |
+|---|---:|---:|
+| 1 | 33.70% | 0.4213 |
+| 3 | 63.00% | 0.5569 |
+| 5 | 77.33% | 0.5836 |
+| 10 | 94.37% | 0.6006 |
+
+详细结果见 [检索报告](docs/QASPER_dev_检索评测报告.md) 与 [机器可读指标](docs/qasper_dev_metrics.json)。这是 BGE-small、IndexFlatIP、已知论文内检索的 dev 成绩，不是跨论文检索结果，也不是独立 test 或答案正确率。没有同口径对照时不能声称优于图检索。
+
+31 项自动测试通过，包含手工可核算的 Recall/MRR、macro 聚合、段落去重、K 截断、无 gold、预测完整性、证据校验、命令行 JSON/Markdown 输出与旧导出兼容性。

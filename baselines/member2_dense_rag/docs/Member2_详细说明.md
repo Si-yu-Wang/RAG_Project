@@ -1,6 +1,6 @@
 # 通用 Baseline 与 Dense Retrieval 设计说明
 
-版本 0.3.1；更新日期 2026-11-02。完整接口签名、字段约束、运行命令及示例以 [README](../README.md) 为准。本说明聚焦模块原理和设计边界。
+版本 0.4.0；更新日期 2026-11-02。完整接口签名、字段约束、运行命令及示例以 [README](../README.md) 为准。本说明聚焦模块原理和设计边界。
 
 ## 1. 总体设计
 
@@ -44,7 +44,7 @@ prediction schema 从 1.0 升至 2.0，因为配置从 Dense 专属 encoder 变�
 
 每题记录问题 ID、答案、全部检索证据、实际上下文、配置和四类耗时。retrieval 包含后端检索及返回值检查，context 为上下文组织，generation 为生成调用及结果检查，total 为这些阶段总耗时。不包含初始化、下载、加载索引和写盘，不能据此声称端到端冷启动延迟。
 
-比较不同检索方法时，应统一语料、问题、检索范围、生成器、K 和上下文预算。按原始证据映射计算 Recall 等检索指标；按所选数据集协议处理多参考答案、不可回答问题和答案类型。正式评分应拒绝 preview 输出，失败不能静默从统计中删除。
+比较不同检索方法时，应统一语料、问题、检索范围、生成器、K 和上下文预算。按原始证据映射计算 Recall 等检索指标；按所选数据集协议处理多参考答案、不可回答问题和答案类型。正式答案评分应拒绝 preview 输出；检索指标可以使用 preview 运行的检索证据，失败不能静默从统计中删除。
 
 CLI 目前提供 Dense 的 build/retrieve/run。自定义检索器通过 Python API 注入。异常采取 fail-fast，批量运行已写入的行保留，不提供自动续跑或自动重试。
 
@@ -52,7 +52,7 @@ CLI 目前提供 Dense 的 build/retrieve/run。自定义检索器通过 Python 
 
 BGE 编码及查询指令参考 [BAAI 模型卡](https://huggingface.co/BAAI/bge-small-en-v1.5) 和 [BGE 官方文档](https://bge-model.com/bge/bge_v1_v1.5.html)。归一化向量内积的余弦检索依据见 [FAISS MetricType](https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances)，索引说明见 [FAISS indexes](https://github.com/facebookresearch/faiss/wiki/Faiss-indexes)。
 
-已提供真实 BGE + FAISS 人工样例索引、通用接口示例和测试。尚未实现实际图检索/融合算法，未运行真实 QASPER 全量评分或真实 LLM 生成。实际验证范围详见验证记录。
+已提供 BGE + FAISS 实现、示例和测试，源码包不含索引。已完成 QASPER dev 全部 1,005 题检索并对 890 题计算 Recall/MRR；未实现实际图检索/融合算法或真实 LLM 答案评分。实际验证范围详见验证记录。
 
 
 ## 7. data-v1.0 对接变化
@@ -63,9 +63,14 @@ BGE 编码及查询指令参考 [BAAI 模型卡](https://huggingface.co/BAAI/bge
 
 prediction schema 仍为 2.0，新增可选 split、config.task 与 Dense config.data 来源信息；旧索引缺少 data 时返回空字典。上游 manifest 的 gold 汇总不写入索引配置。已验证旧 Dense 接口与通用检索协议保持兼容。
 
-PubMedQA 使用单独分类提示词，无 gold 段落时不计算 recall。QASPER 全集可用题数为 2,991；任何子集按 zero_gold_reason 动态统计。当前仅提供检索指标辅助函数，没有完整的拒答/分类/自由文本答案评分器。
+PubMedQA 使用单独分类提示词，无 gold 段落时不计算 recall。QASPER 全集可用题数为 2,991；任何子集按 zero_gold_reason 动态统计。当前提供完整 Dense 检索指标入口，仍没有完整的拒答/分类/自由文本答案评分器。
 
-参照仓库快照与实际运行范围见 upstream_validation.json 和验证记录。真实数据只做了两篇论文的小样本 BGE 建库与检索，没有全量性能或质量结论，也没有真实 LLM 回答。
+参照仓库快照与实际运行范围见 upstream_validation.json 和验证记录。历史记录为两篇论文的小样本；最新完整 dev 检索成绩见 QASPER_dev_检索评测报告.md。尚无真实 LLM 回答。
 
 
 0.3.1 已修复 qasper 无标签请求文件误拦截，加入编码与问题处理进度，并在模型加载前检查请求及输出路径。正式源码包不附带 artifacts，索引需按 README 创建。真实 dev 索引及 5 题验证见验证记录。
+
+
+## 8. 完整评测模块
+
+0.4.0 新增 retrieval_metrics.py 和 evaluation score 命令；gold 只在评测侧读取。支持多 K 段落级 macro Recall 与基于首个相关 chunk 的 MRR。评分前校验问题全集、运行配置、chunk 映射和索引数据来源，避免漏样本或混用配置。保留旧导出命令。JSON 输出保存配置与输入哈希，Markdown 输出保存指标表。详细参数及口径以 README 第 11 节为准。

@@ -1,6 +1,7 @@
 """Evaluation-only boundary. Never import gold into a retriever or generator."""
 import argparse
 import json
+import sys
 from pathlib import Path
 from .data import read_records, sha256
 
@@ -60,13 +61,45 @@ def paragraph_recall(qa_rows, predictions, top_k=5):
             "excluded_questions": len(qa_rows)-len(values)}
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Evaluation-side export of label-free requests")
-    parser.add_argument("--qa", required=True)
-    parser.add_argument("--output", required=True)
-    parser.add_argument("--split")
-    args = parser.parse_args()
-    print(json.dumps(export_requests(args.qa, args.output, args.split), indent=2))
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Existing `--qa ... --output ...` export commands remain valid.
+    if argv and argv[0].startswith('--') and argv[0] not in ('--help', '-h'):
+        argv.insert(0, 'export')
+    parser = argparse.ArgumentParser(description="Export label-free requests or evaluate retrieval")
+    sub = parser.add_subparsers(dest='command', required=True)
+    export = sub.add_parser('export', help='Export label-free requests (evaluation-side)')
+    export.add_argument('--qa', required=True)
+    export.add_argument('--output', required=True)
+    export.add_argument('--split')
+    score = sub.add_parser('score', help='Validate a full split and compute paragraph Recall and chunk MRR')
+    score.add_argument('--qa', required=True)
+    score.add_argument('--predictions', required=True)
+    score.add_argument('--index', required=True, help='Index bundle used as the authoritative chunk corpus')
+    score.add_argument('--split', default='dev')
+    score.add_argument('--ks', nargs='+', type=int, default=[1, 3, 5, 10])
+    score.add_argument('--output', required=True, help='New metrics JSON file')
+    score.add_argument('--report', help='Optional new Markdown report')
+    args = parser.parse_args(argv)
+    if args.command == 'export':
+        print(json.dumps(export_requests(args.qa, args.output, args.split), indent=2))
+        return
+    from .retrieval_metrics import evaluate, render_report
+    outputs = [Path(args.output)] + ([Path(args.report)] if args.report else [])
+    if len({p.resolve() for p in outputs}) != len(outputs):
+        parser.error('--output and --report must be different paths')
+    for output in outputs:
+        if output.exists():
+            parser.error(f'Output already exists: {output}')
+    report = evaluate(args.qa, args.predictions, args.index, args.split, args.ks)
+    for output in outputs:
+        output.parent.mkdir(parents=True, exist_ok=True)
+    with outputs[0].open('x', encoding='utf-8') as f:
+        json.dump(report, f, ensure_ascii=False, indent=2, allow_nan=False)
+    if args.report:
+        with outputs[1].open('x', encoding='utf-8') as f:
+            f.write(render_report(report))
+    print(render_report(report))
 
 
 if __name__ == "__main__":
