@@ -1,0 +1,24 @@
+test_context_budget_and_no_gold_leak (test_core.CoreTests.test_context_budget_and_no_gold_leak) ... ok
+test_corruption_detected (test_core.CoreTests.test_corruption_detected) ... ok
+test_cosine_ranking_and_roundtrip (test_core.CoreTests.test_cosine_ranking_and_roundtrip) ... ok
+test_encoder_mismatch (test_core.CoreTests.test_encoder_mismatch) ... ok
+test_filter_before_top_k (test_core.CoreTests.test_filter_before_top_k) ... ok
+test_http_payload_and_parse (test_core.CoreTests.test_http_payload_and_parse) ... ok
+test_invalid_inputs (test_core.CoreTests.test_invalid_inputs) ... ok
+test_no_evidence_and_missing_scope (test_core.CoreTests.test_no_evidence_and_missing_scope) ... ok
+test_export_only_query_fields (test_data.DataTests.test_export_only_query_fields) ... ok
+test_macro_paragraph_recall_and_exclusions (test_data.DataTests.test_macro_paragraph_recall_and_exclusions) ... ok
+test_manifest_mismatch_and_split (test_data.DataTests.test_manifest_mismatch_and_split) ... ok
+test_parquet_jsonl_equivalence (test_data.DataTests.test_parquet_jsonl_equivalence) ... ok
+test_public_labels_and_bad_spans_rejected (test_data.DataTests.test_public_labels_and_bad_spans_rejected) ... ok
+test_pubmed_prompt (test_data.DataTests.test_pubmed_prompt) ... ok
+test_backend_without_manifest_or_encoder (test_pipeline.PipelineTests.test_backend_without_manifest_or_encoder) ... ok
+test_bad_backend_results_rejected (test_pipeline.PipelineTests.test_bad_backend_results_rejected) ... ok
+test_generic_input_validation (test_pipeline.PipelineTests.test_generic_input_validation) ... ok
+test_global_passes_no_paper_filter (test_pipeline.PipelineTests.test_global_passes_no_paper_filter) ... ok
+test_non_json_config_rejected (test_pipeline.PipelineTests.test_non_json_config_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.144s
+
+OK
