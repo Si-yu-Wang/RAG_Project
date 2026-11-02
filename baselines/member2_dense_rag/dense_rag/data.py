@@ -37,8 +37,9 @@ def assert_public(value):
 
 
 def public_path(path):
-    if Path(path).stem.lower().startswith("qa"):
-        raise ValueError("qa* files belong to evaluation; export label-free requests first")
+    stem = Path(path).stem.lower()
+    if stem == "qa" or stem.startswith(("qa_", "qa-")):
+        raise ValueError("QA label files belong to evaluation; export label-free requests first")
 
 
 def load_chunks(path, split=None, manifest_path=None):

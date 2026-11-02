@@ -1,6 +1,6 @@
 # 通用 Baseline 与 Dense Retrieval 设计说明
 
-版本 0.3.0；更新日期 2026-11-02。完整接口签名、字段约束、运行命令及示例以 [README](../README.md) 为准。本说明聚焦模块原理和设计边界。
+版本 0.3.1；更新日期 2026-11-02。完整接口签名、字段约束、运行命令及示例以 [README](../README.md) 为准。本说明聚焦模块原理和设计边界。
 
 ## 1. 总体设计
 
@@ -59,10 +59,13 @@ BGE 编码及查询指令参考 [BAAI 模型卡](https://huggingface.co/BAAI/bge
 
 新增 data.py 负责 Parquet/JSONL 读取、段落 span 解析、公开字段检查和上游配置校验。chunk 使用已经清洗的 text，paragraph 才使用 text_clean；保留顶层 para_ids、section_path、邻居、坐标与 config_hash，不将这些结构信息丢进不可访问的临时对象。
 
-新增 evaluation.py 隔离 QA 标签文件。它可以在评测侧导出仅含题目和 ID 的请求，并按段落、逐题 macro 计算检索召回。构建索引完全不依赖 QA；推理入口拒绝直接使用 qa* 或带标签的请求。列名检查不能替代防止逻辑泄漏的实验纪律。
+新增 evaluation.py 隔离 QA 标签文件。它可以在评测侧导出仅含题目和 ID 的请求，并按段落、逐题 macro 计算检索召回。构建索引完全不依赖 QA；推理入口拒绝直接使用 qa、qa_ 或 qa- 命名的金标准文件 或带标签的请求。列名检查不能替代防止逻辑泄漏的实验纪律。
 
 prediction schema 仍为 2.0，新增可选 split、config.task 与 Dense config.data 来源信息；旧索引缺少 data 时返回空字典。上游 manifest 的 gold 汇总不写入索引配置。已验证旧 Dense 接口与通用检索协议保持兼容。
 
 PubMedQA 使用单独分类提示词，无 gold 段落时不计算 recall。QASPER 全集可用题数为 2,991；任何子集按 zero_gold_reason 动态统计。当前仅提供检索指标辅助函数，没有完整的拒答/分类/自由文本答案评分器。
 
 参照仓库快照与实际运行范围见 upstream_validation.json 和验证记录。真实数据只做了两篇论文的小样本 BGE 建库与检索，没有全量性能或质量结论，也没有真实 LLM 回答。
+
+
+0.3.1 已修复 qasper 无标签请求文件误拦截，加入编码与问题处理进度，并在模型加载前检查请求及输出路径。正式源码包不附带 artifacts，索引需按 README 创建。真实 dev 索引及 5 题验证见验证记录。

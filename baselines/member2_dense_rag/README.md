@@ -1,6 +1,6 @@
 # 通用 RAG Baseline：可替换检索器与生成器
 
-版本 0.3.0。`Baseline` 统一执行 **检索 → 上下文组织 → 生成 → 结果记录**，不依赖具体检索算法。内置 DenseRetriever 使用 BGE + FAISS；图检索、融合检索通过相同协议接入。
+版本 0.3.1。`Baseline` 统一执行 **检索 → 上下文组织 → 生成 → 结果记录**，不依赖具体检索算法。内置 DenseRetriever 使用 BGE + FAISS；图检索、融合检索通过相同协议接入。
 
 本包包含通用流程和真实 Dense 实现，**不包含真实图检索或融合算法**。自定义示例使用预计算结果演示适配方式。preview 生成器不调用 LLM，不能用其答案做质量评测。
 
@@ -13,7 +13,7 @@
 | `data.load_chunks(path, split=None, manifest_path=None)` | 支持 Parquet / JSONL，返回 chunks 与来源配置 |
 | `DenseRetriever.build(..., split=None, manifest_path=None)` | 直接读上游 chunks；不需要中间格式转换 |
 | `evaluation.export_requests(qa_path, output, split=None)` | 仅在评测侧从 QA 导出 question_id/paper_id/question/split，不导出任何答案或 gold |
-| `data.load_requests(path, split=None)` | 推理侧读取无答案请求；拒绝 qa* 文件及带答案字段的输入 |
+| `data.load_requests(path, split=None)` | 推理侧读取无答案请求；拒绝 qa、qa_、qa- 命名的金标准文件及带答案字段的输入；允许 qasper 开头的无标签请求 |
 | `evaluation.paragraph_recall(qa_rows, predictions, top_k=5)` | 评测侧段落 macro recall；无可评题返回 null，不是 0 |
 
 **字段以契约为准：chunk 正文用 `text`（已清洗）；段落表才使用 `text_clean`。** 不能将 paragraphs.parquet 直接当 chunks 输入。所有章节、split、n_tokens、para_ids、para_spans、前后邻居和 config_hash 在检索结果中保留在原来的顶层字段。Parquet 中的 para_spans JSON 字符串自动解码为数组；不修改 ID，不重新切块，不去掉 overlap 引起的文本重叠。
@@ -77,7 +77,7 @@ pipeline.py 仅依赖 Python 标准库。`from dense_rag import Baseline` 不加
 
 ## 2. 安装与快速开始
 
-在本目录运行，推荐 Python 3.12：
+先进入仓库的 `baselines/member2_dense_rag` 目录，再执行以下命令（不要在仓库根目录安装本模块），推荐 Python 3.12：
 
 ```powershell
 python -m venv .venv
@@ -85,6 +85,10 @@ python -m venv .venv
 .venv/Scripts/python -m pip install --no-deps -e .
 .venv/Scripts/python -m unittest discover -s tests -v
 ```
+
+如果误在仓库根目录运行 `pip install --no-deps -e .`，安装的是 rag-data，可能出现其依赖缺失警告。请在本模块目录创建独立 .venv 并按上面安装；不要直接复制别人的虚拟环境。README 后续 `.venv/Scripts/python` 均指模块内环境。如果使用仓库根目录已创建的环境，将其替换为 `../../.venv/Scripts/python.exe`。
+
+Windows PowerShell 复制命令时，每条完整命令单独执行；不要把两条 `python -m ...` 粘贴成一行。`-m` 是 Python 参数，不是 pip 子命令参数。
 
 上述为包含 Dense 依赖的完整安装。若只验证通用接口，可在本目录用普通 Python 运行预计算检索示例，无须安装 FAISS 或下载模型：
 
@@ -100,7 +104,7 @@ python -m examples.custom_retriever
 .venv/Scripts/python -m dense_rag.cli run --index artifacts/my_index --questions examples/questions.jsonl --output artifacts/my_preview.jsonl
 ```
 
-建库目标目录、输出文件必须尚不存在，防止覆盖旧实验。首次 Dense 运行需下载模型。附带的 artifacts/demo_index 可以直接加载，语料为人工示例。
+建库目标目录、输出文件必须尚不存在，防止覆盖旧实验。首次 Dense 运行需下载模型。正式源码包不含 artifacts 或模型权重，须先执行上面的 build 命令创建索引。examples 中仅含人工示例数据。
 
 ## 3. 数据输入接口
 
@@ -127,7 +131,7 @@ UTF-8 编码，每行一个对象：
 {"question_id":"q1","paper_id":"p1","question":"Which encoder is used?"}
 ```
 
-question 必须非空；paper 模式必须提供 paper_id。global 模式不会按该字段过滤。question_id 可省略，但正式批量运行应提供唯一 ID，便于关联结果。CLI 拒绝带 gold/answer 等标签的输入；Python Baseline 仅把问题传给检索器，不转发额外标签。正式调用仍应传无答案请求。
+question 必须非空；paper 模式必须提供 paper_id。global 模式不会按该字段过滤。Python Baseline 可省略 question_id；CLI 的请求文件必须提供唯一且非空的 question_id，便于关联结果。CLI 拒绝带 gold/answer 等标签的输入；Python Baseline 仅把问题传给检索器，不转发额外标签。正式调用仍应传无答案请求。
 
 ## 4. Retriever：替换检索器
 
@@ -215,7 +219,7 @@ $env:RAG_API_KEY = "你的密钥"
 ```python
 from dense_rag import Baseline, DenseRetriever, PreviewGenerator
 
-retriever = DenseRetriever.load("artifacts/demo_index")
+retriever = DenseRetriever.load("artifacts/my_index")
 baseline = Baseline(
     retriever=retriever,  # 可以换成实现上述协议的 graph/fusion 检索器
     generator=PreviewGenerator(),
@@ -267,10 +271,21 @@ CLI 逐行保存，异常时停止，保留已完成记录。没有自动断点�
 
 index.faiss、chunks.jsonl、manifest.json 必须一起交付。载入校验 hash、模型配置、维度与数量。更换模型、revision、语料或切块策略要重新建索引，仅加载可信索引。更换模型还应检查查询指令与最大长度，不可仅修改模型名。
 
-当前建库将全部 chunks 和向量放入内存，论文子索引按需缓存；大规模数据需要另外评估内存和吞吐。构建失败可能留下不完整目录，使用新目录重试。
+建库会打印 chunk 数量并显示 BGE 批次编码进度；Loading weights 完成仅表示模型加载完成。批量 run 会显示已完成问题数，状态写到 stderr。当前建库将全部 chunks 和向量放入内存，论文子索引按需缓存；大规模数据需要另外评估内存和吞吐。构建失败可能留下不完整目录，使用新目录重试。
 
 ## 9. 验证和边界
 
 验证包含 Dense 回归、没有 manifest/encoder 的自定义检索器、非法返回值和全库范围等测试，见 [验证记录](docs/验证记录.md)。原理与设计补充见 [详细说明](docs/Member2_详细说明.md)。
 
 人工示例及两套上游真实数据的小样本均已实际运行 BGE 检索。预计算适配示例、HTTP 模拟测试不代表真实图算法或 LLM 服务已联调。正式质量评测需真实数据与生成服务，并排除 provider=preview 的答案。
+
+
+## 10. 0.3.1 修复及正式上传
+
+修复 qasper_first5_requests.jsonl 被 qa 前缀规则误拒绝的问题。仍禁止已知 QA 标签文件命名，且递归检查 gold/answer/evidence 等标签字段；把标签文件改名不能绕过字段检查。
+
+新增请求输入、输出文件和 CLI 参数预检查，尽量在加载模型前报告错误。已有输出不会覆盖；复用现有索引直接运行，无须重建。
+
+上传时使用发布包里的 baselines 文件夹，放在仓库根目录。不要上传 ZIP 本身、.venv、artifacts、模型缓存或密钥。GitHub 网页上传不会自动执行 .gitignore，所以应直接使用已整理的发布包。
+
+已完成真实 QASPER dev 的 3,940 个 chunks 建库，并验证前 5 个真实问题各返回 5 个片段。此处是流程验证，不是全量质量评分。真实 LLM、完整 dev 检索评分和真实图检索仍未验证。

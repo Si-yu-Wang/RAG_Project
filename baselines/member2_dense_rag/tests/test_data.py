@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from dense_rag.data import load_chunks, load_requests
+from dense_rag.data import load_chunks, load_requests, public_path
 from dense_rag.evaluation import export_requests, paragraph_recall
 from dense_rag import Baseline, PreviewGenerator
 from test_pipeline import CustomRetriever
@@ -77,6 +77,17 @@ class DataTests(unittest.TestCase):
         self.assertIsNone(paragraph_recall(qa[2:], [], 5)["macro_paragraph_recall"])
         with self.assertRaises(KeyError):
             paragraph_recall(qa, preds[:1])
+
+    def test_qasper_request_filename_and_label_protection(self):
+        request = {"question_id": "q1", "paper_id": "p1", "question": "Why?"}
+        path = self.write("qasper_first5_requests.jsonl", [request])
+        self.assertEqual(load_requests(path), [request])
+        for name in ("qa.parquet", "qa_dataset.jsonl", "qa_with_gold.jsonl", "QA-labels.jsonl"):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                public_path(name)
+        self.write(path.name, [{**request, "gold_para_ids": ["p1#p0000"]}])
+        with self.assertRaises(ValueError):
+            load_requests(path)
 
     def test_pubmed_prompt(self):
         generator = PreviewGenerator()

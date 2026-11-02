@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
+import sys
 import time
 from dataclasses import asdict, dataclass
 from importlib.metadata import version
@@ -76,7 +77,7 @@ class BGEEncoder:
             texts = [self.config.query_instruction + text for text in texts]
         return self.model.encode(texts, batch_size=self.config.batch_size,
                                  normalize_embeddings=True, convert_to_numpy=True,
-                                 show_progress_bar=False)
+                                 show_progress_bar=not query)
 
 
 class DenseRetriever:
@@ -107,6 +108,7 @@ class DenseRetriever:
         folder = Path(directory)
         folder.mkdir(parents=True, exist_ok=False)  # Prevent accidental overwrite.
         start = time.perf_counter()
+        print(f"Encoding {len(chunks)} chunks and building FAISS index...", file=sys.stderr, flush=True)
         vectors = unit_vectors(encoder.encode([c["text"] for c in chunks]))
         if len(vectors) != len(chunks):
             raise ValueError("Embedding count mismatch")
