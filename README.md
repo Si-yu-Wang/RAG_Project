@@ -1,7 +1,7 @@
 # RAG on QASPER & PubMedQA · 项目文档
 
 > 五人协作的检索增强生成（RAG）课程项目。本文件是**项目总入口**。
-> 当前状态：**数据与 Chunking 阶段已完成**（QASPER + PubMedQA 两个数据集）。
+> 当前状态：**数据与 Chunking（M1）、Dense RAG baseline（M2）已完成**；数据集为 QASPER + PubMedQA。
 
 ---
 
@@ -10,7 +10,7 @@
 | 成员 | 职责 |
 |---|---|
 | Member 1 | 数据预处理与 Chunking（已完成） |
-| Member 2 | Dense RAG baseline |
+| Member 2 | Dense RAG baseline（已完成，已合并） |
 | Member 3 | Graph |
 | Member 4 | Graph |
 | Member 5 | Graph |
@@ -36,7 +36,7 @@
 
 ---
 
-## 3. dataset-chunking完成内容
+## 3. 阶段一完成内容：数据与 Chunking（M1）
 
 | 阶段 | 产出 |
 |---|---|
@@ -80,12 +80,45 @@
 
 ---
 
-## 5. 下游怎么接
+## 5. 阶段二完成内容：Dense RAG baseline（M2）
+
+实现位于 [`baselines/member2_dense_rag/`](baselines/member2_dense_rag/README.md)：一套通用 `Baseline` 编排（检索 → 上下文组织 → 生成 → 结果记录），内置 BGE + FAISS 稠密检索；检索器与生成器均按协议可替换，图检索 / 融合检索可接入同一流程。
+
+| 项 | 配置 |
+|---|---|
+| 检索器 | `BAAI/bge-small-en-v1.5`（revision 固定），L2 归一化 + FAISS `IndexFlatIP`，余弦相似度 |
+| 检索范围 | 论文内（`scope=paper`）：先按 `paper_id` 限定候选，再取 Top-K |
+| 索引 | dev **3,940** chunks；切分配置 `size512_ov102_soft`，`config_hash=9febc4ee8cb3` |
+| 评测集 | QASPER dev，1,005 题；有 gold 的 **890** 题计入分母，排除 115 题（no_evidence 78 / float_only 35 / align_fail 2） |
+| 生成器 | `preview`（占位实现，不调用 LLM）；本次只评**检索**，未评答案质量 |
+
+**QASPER dev 检索结果（段落级 macro，分母 890）**
+
+| K | Recall@K | MRR@K |
+|---|---:|---:|
+| 1 | 33.70% | 0.4213 |
+| 3 | 63.00% | 0.5569 |
+| 5 | 77.33% | 0.5836 |
+| 10 | 94.37% | 0.6006 |
+
+- 对照切分上界（**dev 890 题**、同 `para_id` 口径）：`oracle_recall@1/3/5/10 = 88.42 / 99.76 / 99.99 / 100.00%`。**@10 已吃到上界的 94.4%，瓶颈在排序精度（@1 仅为上界的 38%）。**
+- 检索耗时约 **10.1 ms/题**（本机单次，不含建索引与模型加载）。
+- 这是**已知论文内检索**，不是跨论文开放检索；dev 为验证集，不能当独立 test 成绩。
+
+> PubMedQA 走同一数据接口，但任务是 yes/no/maybe 三分类、且无段落级 gold（段落 recall 不适用），本次未评测。
+
+**接入注意**：该 baseline 的严格评分入口只接受「论文内 Top-K」结果；图 / 融合检索接入时须按其 Retriever 协议返回 `chunk_id / text / score / rank`，并遵守返回条数的校验（见其 README 的「Retriever」与「完整检索质量评测」两节）。
+
+---
+
+## 6. 下游怎么接
 
 读这些文件的最小依赖：`pip install pandas pyarrow`（重跑管道：`pip install -e ".[dev]"`，Python ≥ 3.11）。
 
 ### 检索（Dense / Graph 通用）
 读 `chunks.parquet` 的 `chunk_id` + `text` + `n_tokens` 编码、建索引。
+
+> 已有可复用的稠密检索参考实现：`baselines/member2_dense_rag/`（BGE + FAISS，含完整 dev 评测入口）。
 
 ### 建图（Graph）
 `chunks.parquet` 已含 `section_path`（S2ORC 层级）、`prev_chunk_id` / `next_chunk_id`、`para_ids`，文内结构边无需额外数据。跨文档边需自建：QASPER 的论文之间直接互引实测为 0，只能用文献耦合 / 实体共现 / 语义 kNN（见 [`docs/experiments/citation_graph_probe.md`](docs/experiments/citation_graph_probe.md)）。
@@ -105,7 +138,7 @@ QASPER 的 recall 分母取 `zero_gold_reason == ""` 的 **2,991** 题。
 
 ---
 
-## 6. 注意事项
+## 7. 注意事项
 
 ### 评测口径
 
@@ -134,7 +167,7 @@ QASPER 的 recall 分母取 `zero_gold_reason == ""` 的 **2,991** 题。
 
 ---
 
-## 7. 复现
+## 8. 复现
 
 > 已入库的数据可直接用，无需重跑。下面命令仅在换参数、重新生成或从零复现时需要。
 
@@ -170,7 +203,7 @@ PubMedQA `https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pq
 
 ---
 
-## 8. 待确认与文档地图
+## 9. 待确认与文档地图
 
 ### 待确认（不影响当前使用，但可能影响 schema 是否要改第二遍）
 
@@ -191,4 +224,6 @@ PubMedQA `https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pq
 | 做图检索、查跨文档边 | [`docs/experiments/citation_graph_probe.md`](docs/experiments/citation_graph_probe.md) |
 | 数据集本身长什么样 | [`docs/dataset/dataset_profile.md`](docs/dataset/dataset_profile.md)、[`docs/dataset/dataset_consistency.md`](docs/dataset/dataset_consistency.md) |
 | PubMedQA 的详细说明 | [`docs/dataset/pubmedqa_report.md`](docs/dataset/pubmedqa_report.md) |
+| 跑 Dense RAG baseline / 看检索指标口径 | [`baselines/member2_dense_rag/README.md`](baselines/member2_dense_rag/README.md) |
+| QASPER dev 检索评测详情 | [`baselines/member2_dense_rag/docs/QASPER_dev_检索评测报告.md`](baselines/member2_dense_rag/docs/QASPER_dev_检索评测报告.md) |
 | 和 CG-RAG 论文的数字可比性 | [`docs/design/跨数据集可比性说明.md`](docs/design/跨数据集可比性说明.md) |
