@@ -1,0 +1,48 @@
+test_bad_requests_rejected_before_model_load (test_cli.CLITests.test_bad_requests_rejected_before_model_load) ... ok
+test_existing_output_preserved_before_model_load (test_cli.CLITests.test_existing_output_preserved_before_model_load) ... usage: dense-rag [-h] {build,retrieve,run} ...
+dense-rag: error: Output already exists; choose a new --output path
+ok
+test_context_budget_and_no_gold_leak (test_core.CoreTests.test_context_budget_and_no_gold_leak) ... Encoding 3 chunks and building FAISS index...
+ok
+test_corruption_detected (test_core.CoreTests.test_corruption_detected) ... Encoding 3 chunks and building FAISS index...
+ok
+test_cosine_ranking_and_roundtrip (test_core.CoreTests.test_cosine_ranking_and_roundtrip) ... Encoding 3 chunks and building FAISS index...
+ok
+test_encoder_mismatch (test_core.CoreTests.test_encoder_mismatch) ... Encoding 3 chunks and building FAISS index...
+ok
+test_filter_before_top_k (test_core.CoreTests.test_filter_before_top_k) ... Encoding 3 chunks and building FAISS index...
+ok
+test_http_payload_and_parse (test_core.CoreTests.test_http_payload_and_parse) ... Encoding 3 chunks and building FAISS index...
+ok
+test_invalid_inputs (test_core.CoreTests.test_invalid_inputs) ... Encoding 3 chunks and building FAISS index...
+ok
+test_no_evidence_and_missing_scope (test_core.CoreTests.test_no_evidence_and_missing_scope) ... Encoding 3 chunks and building FAISS index...
+ok
+test_export_only_query_fields (test_data.DataTests.test_export_only_query_fields) ... ok
+test_macro_paragraph_recall_and_exclusions (test_data.DataTests.test_macro_paragraph_recall_and_exclusions) ... ok
+test_manifest_mismatch_and_split (test_data.DataTests.test_manifest_mismatch_and_split) ... ok
+test_parquet_jsonl_equivalence (test_data.DataTests.test_parquet_jsonl_equivalence) ... ok
+test_public_labels_and_bad_spans_rejected (test_data.DataTests.test_public_labels_and_bad_spans_rejected) ... ok
+test_pubmed_prompt (test_data.DataTests.test_pubmed_prompt) ... ok
+test_qasper_request_filename_and_label_protection (test_data.DataTests.test_qasper_request_filename_and_label_protection) ... ok
+test_backend_without_manifest_or_encoder (test_pipeline.PipelineTests.test_backend_without_manifest_or_encoder) ... ok
+test_bad_backend_results_rejected (test_pipeline.PipelineTests.test_bad_backend_results_rejected) ... ok
+test_generic_input_validation (test_pipeline.PipelineTests.test_generic_input_validation) ... ok
+test_global_passes_no_paper_filter (test_pipeline.PipelineTests.test_global_passes_no_paper_filter) ... ok
+test_non_json_config_rejected (test_pipeline.PipelineTests.test_non_json_config_rejected) ... ok
+test_hand_calculated_macro_recall_and_mrr (test_retrieval_metrics.RetrievalMetricsTests.test_hand_calculated_macro_recall_and_mrr) ... ok
+test_invalid_ks_and_insufficient_depth_fail (test_retrieval_metrics.RetrievalMetricsTests.test_invalid_ks_and_insufficient_depth_fail) ... ok
+test_legacy_export_cli_remains_supported (test_retrieval_metrics.RetrievalMetricsTests.test_legacy_export_cli_remains_supported) ... ok
+test_missing_extra_and_duplicate_predictions_fail (test_retrieval_metrics.RetrievalMetricsTests.test_missing_extra_and_duplicate_predictions_fail) ... ok
+test_mixed_config_and_corrupt_corpus_fail (test_retrieval_metrics.RetrievalMetricsTests.test_mixed_config_and_corrupt_corpus_fail) ... ok
+test_no_gold_returns_null_not_zero (test_retrieval_metrics.RetrievalMetricsTests.test_no_gold_returns_null_not_zero) ... ok
+test_paragraph_deduplication_and_first_rank (test_retrieval_metrics.RetrievalMetricsTests.test_paragraph_deduplication_and_first_rank) ... ok
+test_score_cli_creates_reports_without_overwrite (test_retrieval_metrics.RetrievalMetricsTests.test_score_cli_creates_reports_without_overwrite) ... usage: python.exe -m unittest [-h] {export,score} ...
+python.exe -m unittest: error: Output already exists: C:\Users\RAIDER~1\AppData\Local\Temp\tmphh6hfoo6\metrics.json
+ok
+test_tampered_evidence_and_rank_fail (test_retrieval_metrics.RetrievalMetricsTests.test_tampered_evidence_and_rank_fail) ... ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.227s
+
+OK

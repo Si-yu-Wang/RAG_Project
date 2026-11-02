@@ -1,0 +1,84 @@
+[
+  {
+    "dataset": "qasper",
+    "full_chunks_validated": 17653,
+    "full_questions": 3598,
+    "eligible_full": 2991,
+    "split": "dev",
+    "exported_requests": 1005,
+    "sample_paper": "1503.00841",
+    "sample_chunks": 15,
+    "retrieved": 5,
+    "retrieval_ms": 13.78189999377355,
+    "sample_metric": {
+      "top_k": 5,
+      "eligible_questions": 1,
+      "macro_paragraph_recall": 0.3333333333333333,
+      "excluded_questions": 0
+    },
+    "sample_over_512_with_special_tokens": 0,
+    "data": {
+      "format": "parquet",
+      "split": null,
+      "text_field": "text",
+      "upstream": {
+        "config_name": "size512_ov102_soft",
+        "config_hash": "9febc4ee8cb3",
+        "config": {
+          "chunk_size": 512,
+          "overlap_ratio": 0.2,
+          "overlap_tokens": null,
+          "min_chunk_tokens": 64,
+          "section_boundary": "soft",
+          "include_abstract": true,
+          "merge_short_tail": true,
+          "resolved_overlap_tokens": 102,
+          "chunker_version": "1.0.0"
+        },
+        "tokenizer": "tokenizers-file:tokenizer.json",
+        "manifest_sha256": "8ebd8f3d19bfe1b7080c0a38ab755d9255bffe0088e6500e99d429e0d1bd53e6"
+      }
+    }
+  },
+  {
+    "dataset": "pubmedqa",
+    "full_chunks_validated": 1024,
+    "full_questions": 1000,
+    "eligible_full": 0,
+    "split": null,
+    "exported_requests": 1000,
+    "sample_paper": "21645374",
+    "sample_chunks": 1,
+    "retrieved": 1,
+    "retrieval_ms": 15.585499990265816,
+    "sample_metric": {
+      "top_k": 5,
+      "eligible_questions": 0,
+      "macro_paragraph_recall": null,
+      "excluded_questions": 1
+    },
+    "sample_over_512_with_special_tokens": 0,
+    "data": {
+      "format": "parquet",
+      "split": null,
+      "text_field": "text",
+      "upstream": {
+        "config_name": "pubmedqa_512_ov102",
+        "config_hash": "9febc4ee8cb3",
+        "config": {
+          "chunk_size": 512,
+          "overlap_ratio": 0.2,
+          "overlap_tokens": null,
+          "min_chunk_tokens": 64,
+          "section_boundary": "soft",
+          "include_abstract": true,
+          "merge_short_tail": true,
+          "resolved_overlap_tokens": 102,
+          "chunker_version": "1.0.0"
+        },
+        "tokenizer": "tokenizers-file:tokenizer.json",
+        "manifest_sha256": "9dd93d612ec9b208e6809a5485e5e815cec2fffb9c8181a021c267bbf72a0be7"
+      }
+    }
+  }
+]
