@@ -79,3 +79,14 @@ desktop.ini
 
 # ---- 本地会话 / 个人笔记（不入库）----
 .workbuddy/
+
+# --- PubMedQA 引文图语料（CG-RAG 扩图，源+耦合核心 ≈1.4k 篇，~2.7 MB）---
+!data/processed/pubmedqa_graph/
+data/processed/pubmedqa_graph/*
+!data/processed/pubmedqa_graph/papers.parquet
+!data/processed/pubmedqa_graph/chunks.parquet
+!data/processed/pubmedqa_graph/graph_edges.parquet
+!data/processed/pubmedqa_graph/qa.parquet
+!data/processed/pubmedqa_graph/report.json
+!data/processed/pubmedqa_graph/report_graph.json
+!data/processed/pubmedqa_graph/source_papers.parquet

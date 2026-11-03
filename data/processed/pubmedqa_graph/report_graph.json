@@ -1,0 +1,11 @@
+{
+  "papers": 1395,
+  "chunks": 3707,
+  "chunks_per_paper_mean": 2.66,
+  "cites_edges": 1042,
+  "cites_dropped_dangling": 23415,
+  "adjacency_edges": 2312,
+  "qa_questions": 951,
+  "qa_with_gold": 951,
+  "config_hash": "8d1de0357138"
+}

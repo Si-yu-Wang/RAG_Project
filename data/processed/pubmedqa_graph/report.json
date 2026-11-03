@@ -1,0 +1,15 @@
+{
+  "source_papers": 951,
+  "source_requested": 1000,
+  "references_fetched": 444,
+  "corpus_papers": 1395,
+  "papers_with_abstract": 1252,
+  "abstract_coverage_pct": 89.7,
+  "refs_abstract_coverage_pct": 67.8,
+  "backfilled": 0,
+  "cites_edges": 24457,
+  "mean_refs_per_source": 25.7,
+  "unique_refs": 23792,
+  "min_cited": 2,
+  "refs_selected": 448
+}
