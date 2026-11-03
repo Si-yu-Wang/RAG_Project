@@ -24,20 +24,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
 
+socket.setdefaulttimeout(20)  # hard cap on DNS/connect/read stalls
 BASE = "https://api.openalex.org/works"
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 UA = "Mozilla/5.0 (rag-project; mailto:student@example.edu)"
 
 
-def _get(url: str, timeout: int = 30, tries: int = 3) -> dict | None:
+def _get(url: str, timeout: int = 20, tries: int = 3) -> dict | None:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     for attempt in range(tries):
         try:
@@ -45,11 +48,11 @@ def _get(url: str, timeout: int = 30, tries: int = 3) -> dict | None:
                 return json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             if e.code == 429 or 500 <= e.code < 600:
-                time.sleep(2 * (attempt + 1))
+                time.sleep(5 * (attempt + 1))
                 continue
             return None
         except Exception:  # noqa: BLE001
-            time.sleep(1.5 * (attempt + 1))
+            time.sleep(2 * (attempt + 1))
     return None
 
 
@@ -103,7 +106,7 @@ def fetch_batch(ids: list[str], cache_dir: Path, batch_idx: int, mailto: str) ->
             "mailto": mailto,
         }
     )
-    d = _cached(cache_dir, f"batch_{batch_idx:05d}", f"{BASE}?{q}")
+    d = _cached(cache_dir, f"batch50_{batch_idx:05d}", f"{BASE}?{q}")
     return (d or {}).get("results") or []
 
 
@@ -137,6 +140,12 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0, help="0 = all")
     ap.add_argument("--mailto", default="rag-project@example.edu")
     ap.add_argument("--backfill", action="store_true", help="fill missing abstracts from PubMed")
+    ap.add_argument(
+        "--min-cited",
+        type=int,
+        default=1,
+        help="only fetch references cited by >= N source papers (2 = coupling core; 1 = all)",
+    )
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -153,10 +162,12 @@ def main() -> int:
     # ---- P0 + P1 -------------------------------------------------------
     src_rows, edges = [], []
     for i, pmid in enumerate(pmids, 1):
+        had = (cache / f"src_{pmid}.json").exists()
         w = fetch_pmid(pmid, cache, args.mailto)
         if not w:
-            print(f"  [{i}/{len(pmids)}] PMID {pmid} NOT FOUND")
-            time.sleep(0.12)
+            print(f"  [{i}/{len(pmids)}] PMID {pmid} NOT FOUND", flush=True)
+            if not had:
+                time.sleep(0.12)
             continue
         oa = wid(w["id"])
         refs = [wid(x) for x in (w.get("referenced_works") or []) if wid(x)]
@@ -172,20 +183,23 @@ def main() -> int:
         )
         edges.extend({"src_paper": oa, "dst_paper": r, "edge_type": "cites"} for r in refs)
         if i % 25 == 0:
-            print(f"  [{i}/{len(pmids)}] resolved")
-        time.sleep(0.12)
+            print(f"  [{i}/{len(pmids)}] resolved", flush=True)
+        if not had:
+            time.sleep(0.12)
 
     src = pd.DataFrame(src_rows)
     print(f"[P1] source resolved {len(src)}/{len(pmids)}, cites edges {len(edges)}")
 
     # ---- P2 ------------------------------------------------------------
-    ref_ids = sorted({e["dst_paper"] for e in edges} - set(src["openalex_id"]))
-    print(f"[P2] unique references to fetch: {len(ref_ids)}")
+    cited = Counter(e["dst_paper"] for e in edges)
+    ref_ids = sorted({d for d, c in cited.items() if c >= args.min_cited} - set(src["openalex_id"]))
+    print(f"[P2] references to fetch (cited >= {args.min_cited}): {len(ref_ids)}", flush=True)
 
     ref_rows: list[dict] = []
-    for i in range(0, len(ref_ids), 25):
-        chunk = ref_ids[i : i + 25]
-        works = fetch_batch(chunk, cache, i // 25, args.mailto)
+    B = 50
+    for i in range(0, len(ref_ids), B):
+        chunk = ref_ids[i : i + B]
+        works = fetch_batch(chunk, cache, i // B, args.mailto)
         for w in works:
             ab = rebuild_abstract(w.get("abstract_inverted_index"))
             pm = None
@@ -203,7 +217,9 @@ def main() -> int:
                     "has_abstract": bool(ab),
                 }
             )
-        time.sleep(0.12)
+        if (i // B) % 10 == 0:
+            print(f"  [P2] batch {i // B + 1}/{(len(ref_ids) + B - 1) // B} rows={len(ref_rows)}", flush=True)
+        time.sleep(0.3)
 
     # source rows (text = CONTEXTS, richer than the OpenAlex abstract)
     src_papers = []
@@ -261,7 +277,9 @@ def main() -> int:
         "backfilled": backfilled,
         "cites_edges": len(edges),
         "mean_refs_per_source": round(src.n_refs.mean(), 1) if len(src) else None,
-        "unique_refs": len(ref_ids),
+        "unique_refs": len(cnt),
+        "min_cited": args.min_cited,
+        "refs_selected": len(ref_ids),
     }
     (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\n[REPORT]")
