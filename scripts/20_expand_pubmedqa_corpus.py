@@ -277,7 +277,7 @@ def main() -> int:
         "backfilled": backfilled,
         "cites_edges": len(edges),
         "mean_refs_per_source": round(src.n_refs.mean(), 1) if len(src) else None,
-        "unique_refs": len(cnt),
+        "unique_refs": len(cited),
         "min_cited": args.min_cited,
         "refs_selected": len(ref_ids),
     }
