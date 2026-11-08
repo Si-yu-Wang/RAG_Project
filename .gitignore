@@ -90,3 +90,11 @@ data/processed/pubmedqa_graph/*
 !data/processed/pubmedqa_graph/report.json
 !data/processed/pubmedqa_graph/report_graph.json
 !data/processed/pubmedqa_graph/source_papers.parquet
+
+# --- GNN-RAG 数据说明（数据本体不入库，只放行 README）---
+!data/data/
+data/data/*
+!data/data/README.md
+!data/processed/qasper_gnn/
+data/processed/qasper_gnn/*
+!data/processed/qasper_gnn/README.md
