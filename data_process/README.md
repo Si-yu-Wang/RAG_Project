@@ -7,8 +7,7 @@
 | WebQSP → 文本格式 | `data/data/webqsp`（稠密 NSM 子图，GNN-RAG 自己的候选池） | `data/processed/webqsp_text/<split>/` | 给 dense baseline 跑 |
 | QASPER → WebQSP 格式 | `data/processed/chunks/size512_ov102_soft/` + `qa_with_gold.jsonl` | `data/processed/qasper_gnn/` | 给 GNN-RAG 的 ReaRev 跑 |
 | GNN-RAG 原生 | `data/data/webqsp`（不需要转换） | — | WebQSP 上的 GNN |
-
-PubMedQA 暂不处理（PubMedQA-1k 每篇约 1 个 chunk、只有论文级 gold，建不出有意义的篇内图；`pubmedqa_graph` 按要求先不管）。
+| PubMedQA 引文图 → WebQSP 格式 | `data/processed/pubmedqa_graph/`（组员建的 1,395 篇引文语料） | `data/processed/pubmedqa_gnn/` | 给 ReaRev 跑；Dense / BM25 / 评分也在同一脚本（`pubmedqa_to_gnn.py`，见 §4b） |
 
 ---
 
@@ -151,6 +150,34 @@ python main.py ReaRev <同上参数> --is_eval --load_experiment qasper_s1qc-h1.
 
 注意：`--data_folder` 末尾要有 `/`，路径里不能出现 `sr-` 或 `metaqa`；不要传 `--relation_emb_file`（ReaRev 会崩）；`--name` 不要用 `cwq`。
 
+正式结果使用的超参数与上面示例不同（示例是最初照搬 WebQSP 的配置）：QASPER 最终选用 `--num_gnn 2 --num_iter 1 --entity_dim 256`（30 轮，按留出 dev 选），见 [`gnn_runs/README.md`](gnn_runs/README.md) 的 `tune` 阶段。
+
+---
+
+## 4b. PubMedQA 引文图 → WebQSP 格式（给 GNN-RAG 跑）
+
+`pubmedqa_to_gnn.py` 一个脚本包含导出、建图、Dense、BM25、GNN 结果回写、评分和配对 bootstrap：
+
+```bash
+python data_process/pubmedqa_to_gnn.py export
+python data_process/embed_bge.py --input data/processed/pubmedqa_gnn/_embed/chunks.jsonl  --out data/processed/pubmedqa_gnn/_embed/chunks
+python data_process/embed_bge.py --input data/processed/pubmedqa_gnn/_embed/queries.jsonl --out data/processed/pubmedqa_gnn/_embed/queries --query
+python data_process/pubmedqa_to_gnn.py build
+python data_process/pubmedqa_to_gnn.py dense --out rankings/pubmedqa_test_dense_bge.jsonl
+python data_process/pubmedqa_to_gnn.py bm25  --out rankings/pubmedqa_test_bm25.jsonl
+python data_process/pubmedqa_to_gnn.py from-gnn --info <ckpt_dir>/<exp>_eval_test.info --dense rankings/pubmedqa_test_dense_bge.jsonl --out rankings/pubmedqa_test_gnn.jsonl
+python data_process/pubmedqa_to_gnn.py score rankings/pubmedqa_test_*.jsonl
+python data_process/pubmedqa_to_gnn.py compare rankings/pubmedqa_test_dense_bge.jsonl rankings/pubmedqa_test_gnn.jsonl
+```
+
+设计（`pubmedqa_citegraph_s1_v1`）：
+
+- **任务**：跨文档检索。候选池为全部 3,707 个 chunk，gold 为出处论文的全部 chunk（与 `scripts/21_build_pubmedqa_graph.py` 的设定一致）。
+- **划分**：原数据没有划分，按题固定 seed（20261109）切成 train 571 / dev 95 / test 285；dev 用于选 checkpoint，所有方法都在 test 上报告。
+- **每题子图**：取 Dense 前 20 个 chunk 所在的论文，加上这些论文的 1 跳引用邻居，候选为这些论文的全部 chunk（上限 150 个）。关系：`0` 根→候选、`1` 同篇相邻、`2` 引用论文之间、`3` 候选间 BGE kNN（k=3）。节点特征与 QASPER 相同（BGE(q)⊙BGE(c)）。原始数据中 2 条论文自引用边被过滤。
+- **最终排名**：候选按 ReaRev 概率排序，其余 chunk 按 Dense 排在后面，保证所有方法都对同一批 chunk 打分。
+- 因为 gold 是整篇论文，chunk 级 Hit@K 与论文级 Hit@K（`paper_hit@K`）恒等。
+
 ---
 
 ## 5. 打分
@@ -197,4 +224,4 @@ python data_process/dense_rank.py rank --dataset webqsp --split test --out ranki
 - `qasper_to_gnn.py`：`check_gnn_folder.py` 全部通过；把 `node_feat.npy` 按行求和（= dense 余弦）伪造成 GNN-RAG 的 `.info` 格式，经 `from-gnn` 转换后打分与 dense 完全相同，说明节点 id、实例 key、答案与 chunk 的映射都对。
 - QASPER dev 下限：随机（50 次平均）R@1/3/5/10 = 14.31/38.98/58.08/86.36；阅读顺序 6.38/26.20/43.74/79.79；BM25 24.90/56.20/73.79/93.18。
 
-尚未验证：GNN-RAG 本身在新环境里能否加载 `qasper_gnn/` 并训练（需要先按 §2 配环境，再用 `check_gnn_folder.py` 之外的真实冒烟测试确认）。
+- 2026-11：三个数据集都已完成 ReaRev 训练、测试集推理与 Dense 对比，结果见 [`docs/experiments/gnn_rag/`](../docs/experiments/gnn_rag/README.md)。

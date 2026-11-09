@@ -1,7 +1,7 @@
 # RAG on QASPER & PubMedQA · 项目文档
 
 > 五人协作的检索增强生成（RAG）课程项目。本文件是**项目总入口**。
-> 当前状态：**数据与 Chunking（M1）、Dense RAG baseline（M2）已完成**；数据集为 QASPER + PubMedQA。
+> 当前状态：**数据与 Chunking（M1）、Dense RAG baseline（M2）已完成**；**GNN 检索（ReaRev）三数据集对比已完成**（WebQSP / QASPER / PubMedQA，见 §5b）。
 
 ---
 
@@ -108,6 +108,18 @@
 > PubMedQA 走同一数据接口，但任务是 yes/no/maybe 三分类、且无段落级 gold（段落 recall 不适用），本次未评测。
 
 **接入注意**：该 baseline 的严格评分入口只接受「论文内 Top-K」结果；图 / 融合检索接入时须按其 Retriever 协议返回 `chunk_id / text / score / rank`，并遵守返回条数的校验（见其 README 的「Retriever」与「完整检索质量评测」两节）。
+
+---
+
+## 5b. 阶段三：GNN 检索（GNN-RAG / ReaRev）与 Dense 三数据集对比
+
+在 WebQSP、QASPER、PubMedQA（组员建的引文图语料）上训练 ReaRev，并与 Dense（BGE-small）在相同候选池、gold 和评分口径下比较检索效果。完整结果、图表和讨论见 [`docs/experiments/gnn_rag/`](docs/experiments/gnn_rag/README.md)，代码见 [`data_process/`](data_process/README.md)。
+
+| 数据集 | ReaRev − Dense（95% CI 不含 0 的标 \*） | 结论 |
+|---|---|---|
+| WebQSP（1,551 题） | Hit@1 **+45.0\***，Recall@10 **+31.2\*** | 原生知识图谱，图大幅领先 |
+| PubMedQA（285 题） | Hit@1 +0.4，Recall@3 **+15.7\***，Recall@10 **+10.8\*** | 找对论文持平，召回同篇段落显著更好 |
+| QASPER（890 题） | 调参后 Hit@1 +2.7、Recall@3 +0.2（均不显著） | 篇内语义匹配为主，与 Dense 持平 |
 
 ---
 
