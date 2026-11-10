@@ -239,3 +239,18 @@ PubMedQA `https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pq
 | 跑 Dense RAG baseline / 看检索指标口径 | [`baselines/member2_dense_rag/README.md`](baselines/member2_dense_rag/README.md) |
 | QASPER dev 检索评测详情 | [`baselines/member2_dense_rag/docs/QASPER_dev_检索评测报告.md`](baselines/member2_dense_rag/docs/QASPER_dev_检索评测报告.md) |
 | 和 CG-RAG 论文的数字可比性 | [`docs/design/跨数据集可比性说明.md`](docs/design/跨数据集可比性说明.md) |
+
+---
+
+## 10. 图推理前端展示（已完成）
+
+基于已有 ReaRev 结果完成单页英文前端，用同一张画布展示 **输入关系图 → GNN 处理框架 → 最终节点分数**。
+
+- 支持切换 5 个问题，同步更新图结构、Top-5 分数和详情。
+- 支持点击节点、关系边、GNN 处理组件及结果查看解释，支持画布缩放、平移与窄屏区域聚焦。
+- 完成展示数据导出、独立 HTML 打包和可选静态预览服务；页面可直接离线打开。
+- 完成数据一致性、前端交互与静态服务检查，共 13 项。
+
+展示图由保存的关系路径展开，最终分数来自原始模型排名，GNN 中间处理以框架示意呈现。
+
+直接打开 [demo/rearev_replay.html](demo/rearev_replay.html) 即可查看，无需启动模型或服务器。也可运行 `python demo/server.py`，访问 http://127.0.0.1:8780。实现、数据来源与更新方式见 [demo/README.md](demo/README.md)。
