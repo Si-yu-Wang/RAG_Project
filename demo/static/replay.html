@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Switch saved queries and inspect graph structure, GNN operations and recorded node scores.">
+  <title>Graph → GNN → Scores</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232d4938'/%3E%3Cpath d='M10 20h20M10 12v16M20 12v16M30 12v16' fill='none' stroke='%23d5dfb9' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="replay.css">
+</head>
+<body>
+  <header><div class="brand"><span>⌘</span><h1>Graph → GNN → Scores</h1></div><button id="about-open" class="text-button">About</button></header>
+  <main>
+    <section class="query"><label for="query-select">QUERY</label><select id="query-select" aria-label="Choose a saved query"></select></section>
+    <section class="board" aria-label="Graph-to-score visualization">
+      <div class="board-toolbar"><span class="eyebrow">SCHEMATIC DATA FLOW</span><div class="view-controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="Zoom in">＋</button><button id="fit">Fit</button></div></div>
+      <div id="viewport" class="viewport" tabindex="0" aria-label="Interactive graph, GNN block and node scores"><div id="world"></div><span class="canvas-hint">Drag to pan · Scroll to zoom</span>
+        <aside id="inspector" class="inspector" hidden><button id="detail-close" class="text-button" aria-label="Close details">×</button><span id="detail-kind" class="eyebrow"></span><h3 id="detail-title"></h3><div id="detail-content"></div></aside>
+      </div>
+      <div class="canvas-footer"><span>Select a node, relation or component to inspect it.</span><nav id="focus-controls" aria-label="Focus a canvas area"><button data-focus="graph">Graph</button><button data-focus="gnn">GNN</button><button data-focus="scores">Scores</button></nav></div>
+    </section>
+    <p class="caption">Schematic GNN · Recorded final scores</p>
+  </main>
+  <dialog id="about"><div class="dialog-head"><h2>About this view</h2><button id="about-close" class="text-button" aria-label="Close about">×</button></div><p>The graph is a local subset expanded from saved relation paths. It is not the complete model input.</p><p>The GNN block illustrates question-guided message passing, representation updates and score readout. Intermediate messages and layer values were not recorded.</p><p>Final node probabilities come from an existing model run. They retain the original full-pool values and are not renormalized over this view. Bar lengths are scaled to the largest visible score.</p><p>This page makes no backend requests and does not execute a model.</p></dialog>
+  <script src="replay-data.js"></script>
+  <script src="replay.js"></script>
+</body>
+</html>
