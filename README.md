@@ -7,13 +7,14 @@
 
 ## 1. 项目与分工
 
-| 成员 | 职责 |
-|---|---|
-| Member 1 | 数据预处理与 Chunking（已完成） |
-| Member 2 | Dense RAG baseline（已完成，已合并） |
-| Member 3 | Graph |
-| Member 4 | Graph |
-| Member 5 | Graph |
+Member	|Responsibilities	|Contribution
+Xutao Zhou|	Data preprocessing and convert text into chunking	|1/6 (16.7%)
+Ze Ji	|Dense RAG baseline; training, testing and evaluation	|1/6 (16.7%)
+Siyu Wang	|Graph data processing and converting text data into graph structure|	1/6 (16.7%)
+Chenyang Li|	GNN-RAG baseline; training, testing and evaluation|	1/6 (16.7%)
+Yifei Qiu	|Backend and visualization; web page for graph data and result display|	1/6 (16.7%)
+Bingbing Cao|	Video production, slides, and project organization|	1/6 (16.7%)
+
 
 > Member 3 / 4 / 5 的具体分工待定，暂不细分。
 
